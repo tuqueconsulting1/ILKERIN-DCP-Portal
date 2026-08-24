@@ -64,6 +64,23 @@ unblocked.
 - [x] First case-manager user created (Supabase Auth + matching `profiles`
       row, role `admin`) — credentials shared with user directly, not stored
       in this repo
+- [x] **Bug found and fixed live in production**: two accounts
+      (`admin@iacentre.co.ke`, `jonahkertich@iacentre.co.ke`) were created
+      directly via the Supabase dashboard's Auth > Users screen, which only
+      creates an `auth.users` row — not the matching `profiles` row every
+      RLS policy's `is_staff()` check depends on. That silently blocked
+      **every** write in the app for those accounts (surfaced first as "new
+      row violates row-level security policy" on Add Client, but would have
+      hit any write). Fixed by inserting the missing `profiles` rows, and
+      — to stop this class of bug from recurring regardless of how a new
+      case manager's account gets created — added a trigger on `auth.users`
+      that auto-provisions a matching `profiles` row on signup
+      (`0013_auto_create_profile_on_signup.sql`, Supabase's own recommended
+      pattern for this). Verified live: created a real throwaway auth user
+      via the admin API with no manual profile insert, confirmed the
+      trigger created one automatically (`role` defaults to
+      `case_manager`, `full_name` derived from the email's local part),
+      then cleaned it up
 
 ## Phase 2 — Zoho WorkDrive integration
 
