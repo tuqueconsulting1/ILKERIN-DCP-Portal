@@ -137,6 +137,23 @@ unblocked.
       plan) — not yet built
 - [ ] Delete/trash support for pending uploads or documents via the Zoho API
       hasn't been found/tested yet (only affects cleanup, not the core flow)
+- [x] **Stage subfolders**: each client's WorkDrive folder now gets three
+      subfolders created automatically — "Stage 1 - Approval of Name",
+      "Stage 2 - Application for Licence", "Stage 3 - Data Submission &
+      Licensing" (`createSubfolder`/`createStageSubfolders` in
+      `src/lib/zoho.ts`) — for both the auto-created-folder path and the
+      manually-linked-existing-folder path (resolving its id via
+      `extractFolderIdFromUrl`), best-effort per subfolder so one failure
+      doesn't block the others or the client creation itself. IDs stored on
+      `clients.workdrive_stage{1,2,3}_folder_id`
+      (`0011_stage_subfolders_and_notifications.sql`)
+- [x] The polling route now checks **both** the root folder and the
+      subfolder matching the application's current stage, so it doesn't
+      matter whether a client drops files flat or into the stage subfolder.
+      Verified live: created a real client with real stage subfolders via
+      the Zoho API, uploaded a real file directly into the Stage 1
+      subfolder, ran the actual polling route, and confirmed it queued the
+      file as a pending upload from the subfolder (not the empty root)
 - [ ] **Expiry tracking deliberately deferred**: user chose OCR/document-AI
       (read the issue date off the actual uploaded document) over a manual
       issue-date input, but wants it left dormant for now and activated later
@@ -315,6 +332,47 @@ unblocked.
       use specifically on the dark header; the original dark-ink version
       stays available in `public/` for light backgrounds. Re-verified via
       browser screenshot after the fix — wordmark clearly legible
+- [x] **Header notification bell**: a 🔔 in the header (only shown when
+      signed in) with an unread-count badge and a dropdown listing recent
+      notifications **grouped by client**
+      (`src/components/notification-bell.tsx`). Unread state is tracked
+      client-side (a "last seen" timestamp in `localStorage`, not a DB read
+      flag, since this app has no per-user targeting model — every notification
+      is visible to every case manager). Polls every 30s for new rows rather
+      than using a Realtime subscription, matching the polling pattern
+      already used for WorkDrive uploads. `AppHeader` is now an async
+      Server Component (checks the session) so the bell only renders for
+      signed-in users; note this makes every page dynamic now (the header's
+      auth check runs on every request), losing the earlier static
+      pre-rendering of `/login` and `/documentation`
+- [x] First notification type wired up: **a document being marked
+      "received"** (both the manual "Mark received" action and matching a
+      WorkDrive upload) now inserts an `in_app` row into `notification_log`
+      via a shared helper (`src/lib/notifications.ts`) —
+      `"{item name} received for {company name}"`. `notification_log`
+      already existed in the schema from Phase 1 but had never been written
+      to; other event types (overdue task, expiring document, CBK deadline)
+      can reuse the same table later. Verified live end-to-end: real Zoho
+      upload → real poll → real match → correct notification row → the
+      exact grouped query the bell component runs returned it correctly
+      grouped under the right client's name
+- [x] **Bug found and fixed while testing**: `notification_log`'s foreign
+      key to `applications` was declared back in the original Phase 1
+      schema *without* `ON DELETE CASCADE` (every other per-application
+      table already had it). That silently broke "Delete client" for any
+      client with a notification on record — Postgres blocked the cascading
+      delete, and the client just... didn't get deleted, with the failure
+      surfacing only as a generic FK error. Caught by actually running the
+      delete after generating a notification, not by reading the schema.
+      Fixed by dropping and re-adding the constraint with `on delete cascade`
+      (`0012_notification_log_cascade_delete.sql`); re-verified the same
+      delete then fully removed the client and its notification
+- [x] RLS: added a `staff can insert notification_log` policy — the
+      original Phase 1 policy only allowed staff to *read* it, assuming
+      only a service-role background job would ever write to it. In
+      practice these writes happen inside normal case-manager server
+      actions running under the user's own session, so they need insert
+      access too
 
 ## Phase 4 — Reminders, CBK tracker, fees, push notifications
 

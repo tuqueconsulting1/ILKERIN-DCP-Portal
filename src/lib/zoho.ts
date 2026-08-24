@@ -92,6 +92,51 @@ export async function createClientWorkdriveFolder(
   return { folderId, permalink, shareLink };
 }
 
+/** Creates a plain subfolder under an existing WorkDrive folder. */
+export async function createSubfolder(parentFolderId: string, name: string): Promise<string> {
+  const res = await zohoApi("/workdrive/api/v1/files", {
+    method: "POST",
+    body: JSON.stringify({
+      data: { attributes: { name, parent_id: parentFolderId }, type: "files" },
+    }),
+  });
+
+  return res.data.id as string;
+}
+
+export type StageSubfolders = {
+  stage1: string;
+  stage2: string;
+  stage3: string;
+};
+
+const STAGE_SUBFOLDER_NAMES: Record<keyof StageSubfolders, string> = {
+  stage1: "Stage 1 - Approval of Name",
+  stage2: "Stage 2 - Application for Licence",
+  stage3: "Stage 3 - Data Submission & Licensing",
+};
+
+/**
+ * Creates the three stage subfolders inside a client's WorkDrive folder, so
+ * documents can be organized by stage instead of dropped flat into one
+ * folder. Best-effort per subfolder — a failure on one stage doesn't stop
+ * the others from being created.
+ */
+export async function createStageSubfolders(parentFolderId: string): Promise<Partial<StageSubfolders>> {
+  const result: Partial<StageSubfolders> = {};
+
+  for (const key of Object.keys(STAGE_SUBFOLDER_NAMES) as Array<keyof StageSubfolders>) {
+    try {
+      result[key] = await createSubfolder(parentFolderId, STAGE_SUBFOLDER_NAMES[key]);
+    } catch {
+      // Leave this stage's folder id unset; the case manager can create it
+      // manually later if needed. Not fatal to the rest.
+    }
+  }
+
+  return result;
+}
+
 export type WorkdriveFile = {
   id: string;
   name: string;

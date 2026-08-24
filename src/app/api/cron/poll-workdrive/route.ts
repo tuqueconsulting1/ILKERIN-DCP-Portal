@@ -18,12 +18,20 @@ export async function GET(request: NextRequest) {
 
   const { data: applications, error: appsError } = await supabase
     .from("applications")
-    .select("id, client:clients(workdrive_folder_url, zoho_workdrive_folder_id)")
+    .select(
+      "id, stage, client:clients(workdrive_folder_url, zoho_workdrive_folder_id, workdrive_stage1_folder_id, workdrive_stage2_folder_id, workdrive_stage3_folder_id)",
+    )
     .eq("status", "active");
 
   if (appsError) {
     return NextResponse.json({ error: appsError.message }, { status: 500 });
   }
+
+  const STAGE_FOLDER_KEY = {
+    stage_1: "workdrive_stage1_folder_id",
+    stage_2: "workdrive_stage2_folder_id",
+    stage_3: "workdrive_stage3_folder_id",
+  } as const;
 
   const results: Array<{ applicationId: string; queued: number; skipped?: string }> = [];
 
@@ -36,9 +44,22 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
+    // Check both the root folder (clients who drop files flat) and the
+    // subfolder for the application's current stage (clients organized by
+    // stage), so neither habit is missed.
+    const stageFolderKey = STAGE_FOLDER_KEY[application.stage as keyof typeof STAGE_FOLDER_KEY];
+    const stageFolderId = stageFolderKey ? (client?.[stageFolderKey] as string | null) : null;
+    const foldersToCheck = [folderId, ...(stageFolderId && stageFolderId !== folderId ? [stageFolderId] : [])];
+
     let files;
     try {
-      files = await listFolderFiles(folderId);
+      const fileLists = await Promise.all(foldersToCheck.map((id) => listFolderFiles(id)));
+      const seen = new Set<string>();
+      files = fileLists.flat().filter((f) => {
+        if (seen.has(f.id)) return false;
+        seen.add(f.id);
+        return true;
+      });
     } catch (err) {
       results.push({
         applicationId: application.id,

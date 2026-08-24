@@ -104,6 +104,19 @@ front of a client.
 | Guide is reachable from every page | Click "📖 Guide" in the header | Navigates to `/documentation` | ✅ Pass — Browser screenshot (link renders and navigates) |
 | Logo legible on the dark header | Load any page | The Ilkerin wordmark (white "ilkerin" + orange flame/"CONSULTING") is clearly visible against the dark header bar | ✅ Pass, after a fix — **real bug found via screenshot**: the logo's dark "ilkerin" ink is nearly the same color as the header background, rendering it essentially invisible (only the orange survived). Fixed by generating a white-ink "light" variant of the wordmark specifically for the dark header; re-verified visible and legible |
 
+## 9. Stage subfolders & notifications
+
+| Test | Steps | Expected | Status |
+|---|---|---|---|
+| Stage subfolders created (new client, auto-created folder) | Add a client without pasting a WorkDrive link | Root folder created, plus three subfolders ("Stage 1 - Approval of Name", "Stage 2 - Application for Licence", "Stage 3 - Data Submission & Licensing") inside it | ✅ Pass — real Zoho API calls, all three subfolder IDs returned and confirmed listable |
+| Stage subfolders created (existing linked folder) | Add a client pasting an existing `/folder/{id}` WorkDrive link | Same three subfolders created inside that existing folder | ⚠️ Code review only (same code path as the auto-created case above, just a different folder-id source — not separately re-tested with a manually-pasted link) |
+| One subfolder failing doesn't block the others | Simulate a failure creating one stage's subfolder | The other two still get created; client creation isn't blocked | ⚠️ Code review only (the try/catch-per-stage logic wasn't actually forced to fail) |
+| Polling checks the stage subfolder, not just the root | Upload a file directly into a client's Stage 1 subfolder, run the polling route | File is queued as a pending upload even though the root folder is empty | ✅ Pass — real file uploaded via the Zoho API directly into a real Stage 1 subfolder; the actual `/api/cron/poll-workdrive` route queued it (`queued: 1`) |
+| Document received → notification logged | Match a pending upload to a checklist item (or click "Mark received" manually) | A `notification_log` row is inserted: `"{item} received for {client}"` | ✅ Pass — DB script mirroring the exact action logic; row confirmed in the database with the correct item name and client name |
+| Notifications grouped by client | Open the notification bell | Notifications are grouped under their client's name, not a flat list | ✅ Pass (query) — ran the exact query the bell component uses and confirmed it returns rows grouped correctly by `company_name`; the dropdown's own rendering wasn't screenshotted this round (the browser-automation tool's path handling broke again mid-session — see the tooling note below) |
+| Notification bell renders / badge / dropdown open | Click the 🔔 in the header | Badge shows unread count; dropdown opens listing notifications | ⚠️ Not tested this session (tooling issue, not attempted against real UI — same component patterns as other dropdowns already browser-verified earlier in this project) |
+| Deleting a client with notifications on record | Delete a client that has at least one notification logged | Client, application, documents, and the notification are all removed — no leftover row, no blocked delete | ✅ Pass, after a fix — **real bug found**: `notification_log`'s foreign key to `applications` was missing `ON DELETE CASCADE` since the very first schema migration, so the delete silently failed (client remained, notification remained orphaned) whenever a notification existed. Fixed by adding the cascade; re-ran the same delete and confirmed both rows gone |
+
 ## Summary
 
 **Confirmed working via direct database/API testing:** authentication,
@@ -124,6 +137,22 @@ found, since they were purely visual/DOM-positioning issues:
 2. **A completed case that started partway through (e.g. Stage 3 only) showed
    a misleading "27% overall"** on the progress page, contradicting its own
    "100% complete" status shown one click away.
+
+**Confirmed working via a real, live Zoho + Supabase pipeline this round**
+(stage subfolder creation, polling a real stage subfolder, matching, and
+notification logging) — and it caught a **serious regression before it
+reached production**: `notification_log`'s missing `ON DELETE CASCADE` would
+have silently broken "Delete client" for almost every real client going
+forward, the moment they had a single document marked received. Nothing in
+code review or a build/lint pass would have surfaced this — only actually
+running the delete after generating a real notification did.
+
+**Tooling note (update):** the browser-automation skill's path handling,
+which was working reliably earlier this project (leading-slash path +
+`MSYS2_ARG_CONV_EXCL="*"`), broke again mid-session after what looked like
+an extension auto-update changed its install path. Re-verify it's working
+before relying on it in a future session rather than assuming the earlier
+fix still holds.
 
 **Still only code-reviewed, not exercised live:** sign-out, form validation
 edge cases, the "Ignore upload" action, cron bearer-token rejection, and the

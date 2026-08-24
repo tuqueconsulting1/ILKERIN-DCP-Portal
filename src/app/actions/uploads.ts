@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logDocumentReceivedNotification } from "@/lib/notifications";
 
 export async function matchPendingUpload(
   pendingUploadId: string,
@@ -49,6 +50,8 @@ export async function matchPendingUpload(
   if (pendingUpdateErr) {
     return { error: pendingUpdateErr.message };
   }
+
+  await logDocumentReceivedNotification(supabase, documentId, applicationId);
 
   revalidatePath(`/cases/${applicationId}`);
   revalidatePath("/");

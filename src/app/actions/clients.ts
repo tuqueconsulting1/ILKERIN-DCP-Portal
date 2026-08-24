@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createClientWorkdriveFolder } from "@/lib/zoho";
+import { createClientWorkdriveFolder, createStageSubfolders, extractFolderIdFromUrl } from "@/lib/zoho";
 
 export type AddClientState = { error?: string; success?: boolean; warning?: string };
 
@@ -47,10 +47,13 @@ export async function addClient(
   }
 
   let warning: string | undefined;
+  let rootFolderId: string | null = null;
 
   if (!workdriveFolderUrl) {
     try {
       const folder = await createClientWorkdriveFolder(companyName);
+      rootFolderId = folder.folderId;
+
       const { error: folderUpdateErr } = await supabase
         .from("clients")
         .update({
@@ -67,6 +70,37 @@ export async function addClient(
       warning = `Client created, but the WorkDrive folder could not be created automatically (${
         err instanceof Error ? err.message : String(err)
       }). Link one manually from the case page.`;
+    }
+  } else {
+    rootFolderId = extractFolderIdFromUrl(workdriveFolderUrl);
+  }
+
+  // Organize the folder by stage, whether it was just auto-created or is an
+  // existing folder the case manager linked. Best-effort: if the folder id
+  // couldn't be resolved (e.g. an external share link rather than an
+  // internal folder link), stage subfolders just aren't created — nothing
+  // else about adding the client is blocked by this.
+  if (rootFolderId) {
+    try {
+      const stageFolders = await createStageSubfolders(rootFolderId);
+      const { error: stageFoldersErr } = await supabase
+        .from("clients")
+        .update({
+          workdrive_stage1_folder_id: stageFolders.stage1 ?? null,
+          workdrive_stage2_folder_id: stageFolders.stage2 ?? null,
+          workdrive_stage3_folder_id: stageFolders.stage3 ?? null,
+        })
+        .eq("id", client.id);
+
+      if (stageFoldersErr && !warning) {
+        warning = `Stage subfolders were created but could not be saved: ${stageFoldersErr.message}`;
+      }
+    } catch (err) {
+      if (!warning) {
+        warning = `Client created, but stage subfolders could not be created automatically (${
+          err instanceof Error ? err.message : String(err)
+        }).`;
+      }
     }
   }
 

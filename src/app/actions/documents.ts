@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logDocumentReceivedNotification } from "@/lib/notifications";
 
 const VALID_STATUSES = new Set(["missing", "received", "verified", "rejected"]);
 
@@ -33,6 +34,10 @@ export async function updateDocumentStatus(
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (status === "received") {
+    await logDocumentReceivedNotification(supabase, documentId, applicationId);
   }
 
   revalidatePath(`/cases/${applicationId}`);
