@@ -31,8 +31,8 @@ function Ring({
         cy={CENTER}
         r={radius}
         fill="none"
-        stroke="#e4e4e7"
         strokeWidth={STROKE}
+        className="stroke-zinc-200 dark:stroke-zinc-700"
       />
       {pct > 0 && (
         <circle
@@ -40,11 +40,12 @@ function Ring({
           cy={CENTER}
           r={radius}
           fill="none"
-          stroke={active ? "#f85814" : "#212629"}
           strokeWidth={STROKE}
           strokeLinecap="round"
           strokeDasharray={`${filled} ${circumference}`}
-          className="transition-[stroke-dasharray] duration-700 ease-out"
+          className={`transition-[stroke-dasharray] duration-700 ease-out ${
+            active ? "stroke-brand" : "stroke-brand-dark dark:stroke-zinc-300"
+          }`}
         />
       )}
     </g>
@@ -77,11 +78,11 @@ export function ProgressRings({
           x={CENTER}
           y={CENTER - 4}
           textAnchor="middle"
-          className="fill-zinc-900 text-2xl font-semibold"
+          className="fill-zinc-900 text-2xl font-semibold dark:fill-zinc-100"
         >
           {overallPct}%
         </text>
-        <text x={CENTER} y={CENTER + 16} textAnchor="middle" className="fill-zinc-500 text-xs">
+        <text x={CENTER} y={CENTER + 16} textAnchor="middle" className="fill-zinc-500 text-xs dark:fill-zinc-400">
           overall
         </text>
       </svg>
@@ -90,11 +91,12 @@ export function ProgressRings({
         {stages.map((s) => (
           <li key={s.stage} className="flex items-center gap-2">
             <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: s.stage === currentStage ? "#f85814" : "#212629" }}
+              className={`h-2.5 w-2.5 rounded-full ${
+                s.stage === currentStage ? "bg-brand" : "bg-brand-dark dark:bg-zinc-300"
+              }`}
             />
-            <span className="font-medium text-zinc-800">{s.label}</span>
-            <span className="text-zinc-500">
+            <span className="font-medium text-zinc-800 dark:text-zinc-200">{s.label}</span>
+            <span className="text-zinc-500 dark:text-zinc-400">
               {s.started ? `${s.verified}/${s.total} verified (${s.pct}%)` : "Not started"}
             </span>
           </li>

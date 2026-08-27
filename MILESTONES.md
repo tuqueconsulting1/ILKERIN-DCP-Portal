@@ -390,6 +390,57 @@ unblocked.
       practice these writes happen inside normal case-manager server
       actions running under the user's own session, so they need insert
       access too
+- [x] **Real, app-wide dark mode toggle + orange dot-grid dashboard
+      accent**. Deliberately class-based (`.dark` on `<html>`, via Tailwind
+      v4's `@custom-variant dark (&:where(.dark, .dark *));`) rather than
+      `prefers-color-scheme` — an earlier attempt at OS-driven dark mode
+      made form input text invisible (no matching background), so this
+      time every `dark:` variant is added explicitly, element by element,
+      with nothing dark by accident. A blocking inline script in
+      `<head>` (`themeInitScript`, from the new
+      `src/components/theme-toggle.tsx`) reads `localStorage` and applies
+      the class before first paint to avoid a flash of the wrong theme;
+      `<html>`/`<body>` carry `suppressHydrationWarning` for this reason.
+      `ThemeToggle` sits in the header next to the notification bell.
+      Colors were applied across all ~21 page/component files via a
+      scripted find-and-replace with an ordered rule list (specific,
+      variant-prefixed rules before generic ones), following a fixed
+      elevation scale (`bg-zinc-50`→`950` page bg, `bg-white`→`zinc-800`
+      cards, `bg-zinc-100`→`zinc-900` subtle containers, plus matching
+      text/border/status-badge pairs). `progress-rings.tsx`'s SVG needed
+      manual conversion from inline hex `stroke`/`fill` to Tailwind
+      classes, since inline styles can't carry `dark:` variants. Dashboard
+      gets an additional orange dot-grid decoration (`.dot-grid-bg` in
+      `globals.css`, a radial-gradient background masked to fade out
+      toward the bottom) tuned to a lower opacity in dark mode so it reads
+      as texture, not clutter.
+      **Bug found and fixed before commit**: the first run of the bulk
+      color-replacement script produced cascading duplicates (e.g.
+      `dark:text-zinc-400 dark:text-zinc-500`) because a later generic
+      rule matched text just inserted by an earlier rule; fixed with a
+      negative lookbehind (`(?<!dark:)`) alongside the existing lookahead,
+      after reverting the affected files and re-running clean.
+      **False alarm caught during verification**: a synchronous
+      `getComputedStyle` check right after toggling dark mode showed real
+      `#email`/`#password` inputs keeping their old (light) background,
+      while a freshly-created clone with identical classes showed the
+      correct dark color immediately — looked like a real input-visibility
+      bug. Root cause was `transition-colors` (already present on inputs)
+      making the background change gradual rather than instant, so the
+      check was reading a value mid-transition; a clone has no prior value
+      to transition from, so it paints its end-state immediately. A
+      screenshot taken with a short delay after the toggle confirmed
+      correct dark styling (dark page/card background, light text, visible
+      input borders, light-ink logo variant, correct toggle icon state) —
+      not a real bug, but worth remembering as a testing-methodology trap
+      for any future `dark:`-transition check.
+      Verified via lint + production build (`npm run build`, clean) and a
+      live browser screenshot of the login page in both light and dark
+      mode; the dashboard itself was code-reviewed (consistent `dark:`
+      variants throughout `case-board.tsx`, `progress-rings.tsx`, and
+      `page.tsx`'s new dot-grid block) but not itself screenshotted this
+      round — a working case-manager login wasn't available in this
+      session to drive a real browser session past `/login`.
 
 ## Phase 4 — Reminders, CBK tracker, fees, push notifications
 

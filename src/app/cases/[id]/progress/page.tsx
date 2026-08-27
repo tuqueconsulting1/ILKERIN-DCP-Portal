@@ -100,60 +100,60 @@ export default async function CaseProgressPage({
     .order("due_date", { ascending: true });
 
   return (
-    <div className="flex-1 bg-zinc-50 px-6 py-8">
+    <div className="flex-1 bg-zinc-50 dark:bg-zinc-950 px-6 py-8">
       <div className="animate-fade-in mx-auto max-w-3xl space-y-6">
         <div>
-          <Link href={`/cases/${id}`} className="text-sm text-zinc-500 transition-colors hover:text-brand-dark">
+          <Link href={`/cases/${id}`} className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
             ← Back to case
           </Link>
-          <h1 className="mt-2 text-xl font-semibold text-zinc-900">{client?.company_name} — Progress</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{client?.company_name} — Progress</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {application.status === "complete" ? "Complete" : STAGE_LABEL[application.stage]}
           </p>
         </div>
 
-        <div className="rounded-lg border border-zinc-200 bg-white p-6">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6">
           <ProgressRings stages={stages} overallPct={overallPct} currentStage={application.stage} />
         </div>
 
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-zinc-700">
-            Remaining checklist items <span className="font-normal text-zinc-400">({remainingChecklist.length})</span>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            Remaining checklist items <span className="font-normal text-zinc-400 dark:text-zinc-500">({remainingChecklist.length})</span>
           </h2>
-          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
             {remainingChecklist.length > 0 ? (
-              <ul className="divide-y divide-zinc-100 text-sm">
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-700 text-sm">
                 {remainingChecklist.map((item, i) => (
                   <li key={i} className="flex items-center justify-between py-2">
-                    <span className="text-zinc-800">{item.item_name}</span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-zinc-800 dark:text-zinc-200">{item.item_name}</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {STAGE_LABEL[item.stage]?.split(" — ")[0]} · {item.status}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-zinc-500">Nothing outstanding.</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Nothing outstanding.</p>
             )}
           </div>
         </section>
 
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-zinc-700">
-            Remaining tasks <span className="font-normal text-zinc-400">({openTasks?.length ?? 0})</span>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+            Remaining tasks <span className="font-normal text-zinc-400 dark:text-zinc-500">({openTasks?.length ?? 0})</span>
           </h2>
-          <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
             {openTasks && openTasks.length > 0 ? (
-              <ul className="divide-y divide-zinc-100 text-sm">
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-700 text-sm">
                 {openTasks.map((task) => (
                   <li key={task.id} className="flex items-center justify-between py-2">
-                    <span className="text-zinc-800">{task.title}</span>
-                    <span className="text-xs text-zinc-500">{task.due_date ?? "no due date"}</span>
+                    <span className="text-zinc-800 dark:text-zinc-200">{task.title}</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">{task.due_date ?? "no due date"}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-zinc-500">No open tasks.</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">No open tasks.</p>
             )}
           </div>
         </section>

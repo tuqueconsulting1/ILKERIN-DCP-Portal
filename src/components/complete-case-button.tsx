@@ -35,7 +35,7 @@ export function CompleteCaseButton({ applicationId }: { applicationId: string })
       >
         {pending ? "Completing…" : "Licence received — Complete case"}
       </button>
-      {error && <span className="animate-fade-in text-xs text-red-600">{error}</span>}
+      {error && <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );
 }

@@ -104,14 +104,14 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="animate-scale-in absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-zinc-200 bg-white shadow-xl">
+          <div className="animate-scale-in absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xl">
             <div className="max-h-96 overflow-y-auto p-2">
               {Object.keys(grouped).length === 0 && (
-                <p className="p-4 text-center text-sm text-zinc-500">No notifications yet.</p>
+                <p className="p-4 text-center text-sm text-zinc-500 dark:text-zinc-400">No notifications yet.</p>
               )}
               {Object.entries(grouped).map(([companyName, items]) => (
                 <div key={companyName} className="mb-2 last:mb-0">
-                  <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                     {companyName}
                   </p>
                   <ul>
@@ -120,10 +120,10 @@ export function NotificationBell() {
                         <Link
                           href={n.related_application_id ? `/cases/${n.related_application_id}` : "#"}
                           onClick={() => setOpen(false)}
-                          className="block rounded-md px-2 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
+                          className="block rounded-md px-2 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50"
                         >
                           <span>{n.template}</span>
-                          <span className="ml-1 text-xs text-zinc-400">· {timeAgo(n.created_at)}</span>
+                          <span className="ml-1 text-xs text-zinc-400 dark:text-zinc-500">· {timeAgo(n.created_at)}</span>
                         </Link>
                       </li>
                     ))}

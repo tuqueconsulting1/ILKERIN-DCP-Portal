@@ -43,15 +43,16 @@ export default async function DashboardPage() {
     .order("updated_at", { ascending: false });
 
   return (
-    <div className="flex-1 bg-zinc-50 px-6 py-8">
+    <div className="relative flex-1 overflow-hidden bg-zinc-50 dark:bg-zinc-950 px-6 py-8">
+      <div aria-hidden className="dot-grid-bg pointer-events-none absolute inset-x-0 top-0 h-80 w-full" />
       <Suspense fallback={null}>
         <CompletionConfetti />
       </Suspense>
-      <div className="animate-fade-in mx-auto max-w-6xl">
+      <div className="animate-fade-in relative mx-auto max-w-6xl">
         <div className="mb-6 flex items-baseline justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Case whiteboard</h1>
-            <p className="text-sm text-zinc-500">Live progress across every client engagement</p>
+            <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Case whiteboard</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Live progress across every client engagement</p>
           </div>
           <div className="flex items-center gap-4">
             <GuideMeButton steps={DASHBOARD_TOUR} />
@@ -61,7 +62,7 @@ export default async function DashboardPage() {
         </div>
 
         {error && (
-          <p className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+          <p className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-400">
             Could not load cases: {error.message}
           </p>
         )}

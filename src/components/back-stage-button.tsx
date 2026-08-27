@@ -47,11 +47,11 @@ export function BackStageButton({
       <button
         onClick={handleClick}
         disabled={pending}
-        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:border-brand-dark hover:text-brand-dark disabled:opacity-50"
+        className="rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:border-brand-dark dark:hover:border-brand hover:text-brand-dark dark:hover:text-brand disabled:opacity-50"
       >
         {pending ? "Moving…" : `← Back to ${STAGE_LABEL[previousStage] ?? previousStage}`}
       </button>
-      {error && <span className="animate-fade-in text-xs text-red-600">{error}</span>}
+      {error && <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );
 }

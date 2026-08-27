@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationBell } from "@/components/notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export async function AppHeader() {
   const supabase = await createClient();
@@ -24,6 +25,7 @@ export async function AppHeader() {
       </Link>
       <div className="flex items-center gap-4">
         {user && <NotificationBell />}
+        <ThemeToggle />
         <Link
           href="/documentation"
           className="text-sm text-white/70 transition-colors hover:text-white"

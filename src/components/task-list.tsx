@@ -67,11 +67,11 @@ export function TaskList({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
       {localTasks.length > 0 ? (
         <ul className="space-y-1 text-sm">
           {localTasks.map((task) => (
-            <li key={task.id} className="flex items-center justify-between gap-2 text-zinc-700">
+            <li key={task.id} className="flex items-center justify-between gap-2 text-zinc-700 dark:text-zinc-300">
               <label className="flex flex-1 items-center gap-2">
                 <input
                   type="checkbox"
@@ -81,31 +81,31 @@ export function TaskList({
                   className="accent-brand"
                 />
                 <span
-                  className={`transition-colors ${task.status === "done" ? "text-zinc-400 line-through" : ""}`}
+                  className={`transition-colors ${task.status === "done" ? "text-zinc-400 dark:text-zinc-500 line-through" : ""}`}
                 >
                   {task.title}
                 </span>
               </label>
-              <span className="text-xs text-zinc-500">{task.due_date ?? "no due date"}</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">{task.due_date ?? "no due date"}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-zinc-500">No tasks yet.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">No tasks yet.</p>
       )}
 
       {!locked && (
-        <form ref={formRef} onSubmit={handleAdd} className="mt-3 flex gap-2 border-t border-zinc-100 pt-3">
+        <form ref={formRef} onSubmit={handleAdd} className="mt-3 flex gap-2 border-t border-zinc-100 dark:border-zinc-700 pt-3">
           <input
             name="title"
             placeholder="New task"
             required
-            className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 dark:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
           <input
             name="dueDate"
             type="date"
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
           <button
             type="submit"
@@ -116,7 +116,7 @@ export function TaskList({
           </button>
         </form>
       )}
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

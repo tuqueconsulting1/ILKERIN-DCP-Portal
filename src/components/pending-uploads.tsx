@@ -57,16 +57,16 @@ function UploadRow({
   }
 
   return (
-    <div className="animate-fade-in flex flex-wrap items-center gap-2 border-b border-zinc-100 py-2 text-sm last:border-0">
-      <span className="flex-1 font-medium text-zinc-900">{upload.zoho_file_name}</span>
+    <div className="animate-fade-in flex flex-wrap items-center gap-2 border-b border-zinc-100 dark:border-zinc-700 py-2 text-sm last:border-0">
+      <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">{upload.zoho_file_name}</span>
       {locked ? (
-        <span className="text-xs text-zinc-400">Locked</span>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">Locked</span>
       ) : options.length > 0 ? (
         <>
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
           >
             {options.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -83,18 +83,18 @@ function UploadRow({
           </button>
         </>
       ) : (
-        <span className="text-xs text-zinc-400">No missing checklist items to match</span>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">No missing checklist items to match</span>
       )}
       {!locked && (
         <button
           disabled={pending}
           onClick={ignore}
-          className="text-xs text-zinc-500 transition-colors hover:text-zinc-700 disabled:opacity-50"
+          className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50"
         >
           Ignore
         </button>
       )}
-      {error && <span className="w-full text-xs text-red-600">{error}</span>}
+      {error && <span className="w-full text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );
 }
@@ -114,10 +114,10 @@ export function PendingUploads({
 
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold text-zinc-700">
-        Unmatched uploads <span className="font-normal text-zinc-400">({uploads.length})</span>
+      <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        Unmatched uploads <span className="font-normal text-zinc-400 dark:text-zinc-500">({uploads.length})</span>
       </h2>
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
         {uploads.map((upload) => (
           <UploadRow
             key={upload.id}

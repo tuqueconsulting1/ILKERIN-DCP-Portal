@@ -117,6 +117,32 @@ front of a client.
 | Notification bell renders / badge / dropdown open | Click the 🔔 in the header | Badge shows unread count; dropdown opens listing notifications | ⚠️ Not tested this session (tooling issue, not attempted against real UI — same component patterns as other dropdowns already browser-verified earlier in this project) |
 | Deleting a client with notifications on record | Delete a client that has at least one notification logged | Client, application, documents, and the notification are all removed — no leftover row, no blocked delete | ✅ Pass, after a fix — **real bug found**: `notification_log`'s foreign key to `applications` was missing `ON DELETE CASCADE` since the very first schema migration, so the delete silently failed (client remained, notification remained orphaned) whenever a notification existed. Fixed by adding the cascade; re-ran the same delete and confirmed both rows gone |
 
+## 10. Dark mode & dashboard dot-grid accent
+
+| Test | Steps | Expected | Status |
+|---|---|---|---|
+| Toggle switches theme instantly | Click the 🌙/☀️ button in the header | `<html>` gains/loses the `dark` class immediately, icon flips | ✅ Pass — Browser (confirmed `document.documentElement.classList` change and icon state after click) |
+| Theme persists across navigation & reload | Toggle dark mode, navigate to another page, then reload | Stays dark, no flash of light theme before paint | ✅ Pass — Browser (`localStorage` write confirmed; blocking inline head script applies the class pre-paint) |
+| Login page renders correctly in dark mode | Toggle dark mode on `/login` | Dark page/card background, light headings/labels, visible input borders, light-ink logo variant | ✅ Pass — Browser screenshot (`login-dark-delayed.png`, taken with a short delay after toggling — see note below) |
+| Input text/background legible in dark mode | Type in email/password fields after toggling dark mode | Dark input background, light readable text, visible border | ✅ Pass — Browser, computed style confirmed (`color`, `background-color`, `border-color` all correctly dark-mode values) after accounting for `transition-colors` timing (see note below) |
+| Login page still correct in light mode (regression) | Load `/login` fresh, no toggle | Unchanged from before this feature — white card, orange focus ring, dark text | ✅ Pass — Browser screenshot |
+| Dashboard dot-grid + dark mode | Load `/` in light and dark mode | Orange dot-grid fades in near the top of the page in both themes (dimmer in dark mode); board/cards/badges render with correct dark styling | ⚠️ Code review only — `dark:` variants confirmed consistent across `case-board.tsx`, `progress-rings.tsx`, and the new `.dot-grid-bg` block in `page.tsx`/`globals.css`, and the same pattern is browser-confirmed working on the login page, but the dashboard itself wasn't reachable this session (no valid case-manager credentials on hand to get past `/login` in a scripted browser session) |
+| Progress rings render correctly in dark mode | Open a case's progress page in dark mode | SVG rings, center %, and legend all use `dark:` variants (converted from inline hex `stroke`/`fill`, which can't respond to `dark:` at all) | ⚠️ Code review only (same reachability limitation as above) |
+
+**Note on a false alarm during this testing round:** a synchronous
+`getComputedStyle` check taken immediately after clicking the toggle showed
+the real email/password inputs still holding their *old* (light) background,
+while a freshly-created clone with identical classes showed the correct dark
+background right away — this looked like a genuine input-visibility bug.
+The actual cause was `transition-colors` (already on all inputs) making
+`background-color` change gradually rather than instantly, so the check was
+sampling mid-transition. A clone has no prior value to transition from, so
+it paints its end-state immediately, which is why it always looked
+"correct" by comparison. Adding a short delay after the toggle before
+reading computed style showed the real, correct final value. Worth
+remembering for any future test that checks a `dark:`-driven style change
+right after triggering it.
+
 ## Summary
 
 **Confirmed working via direct database/API testing:** authentication,
@@ -155,18 +181,30 @@ before relying on it in a future session rather than assuming the earlier
 fix still holds.
 
 **Still only code-reviewed, not exercised live:** sign-out, form validation
-edge cases, the "Ignore upload" action, cron bearer-token rejection, and the
-tour's behavior when a target section has no content yet.
+edge cases, the "Ignore upload" action, cron bearer-token rejection, the
+tour's behavior when a target section has no content yet, and (this round)
+the dashboard itself in dark mode / with the dot-grid accent, since no
+working case-manager credentials were available to drive a scripted browser
+past `/login` this session.
 
-**Tooling note for future browser testing in this repo:** the
-`browser-automation` skill's `--script` flag fails on Windows with a path
-"protocol" error unless (a) the script path is passed with a **leading `/`**
-before the drive letter (e.g. `/C:/Users/...`, not `C:\Users\...`), because
-the tool's own path-joining logic breaks otherwise, and (b) the shell command
-is run with `MSYS2_ARG_CONV_EXCL="*"` set, because Git Bash otherwise mangles
-that leading-slash argument before Node ever sees it. Both are required
-together. Separately, simulating a login form via `--eval` by setting
-`input.value` directly is unreliable — React's controlled-input re-renders
-can silently reset a second field's value before it's read. Use Playwright's
-`page.locator(...).fill(...)` inside a real `--script` file instead, which
-worked reliably once the path issue above was solved.
+**Tooling note for future browser testing in this repo (updated again):**
+the `browser-automation` skill's `--script` path handling keeps changing
+across extension updates — don't trust either past fix as still correct
+without re-checking. Earlier this project a **leading `/`** before the drive
+letter (`/C:/Users/...`) was required, plus `MSYS2_ARG_CONV_EXCL="*"` on the
+shell command. This round, on extension version 3.24.54 (install path had
+moved from `.vscode\extensions\danielsanmedium.dscodegpt-*\standalone` to
+`.codegpt\skills\browser-automation`), that same leading-slash form instead
+produced a **doubled drive letter** (`Cannot find module 'C:\\C:\\Users\\...'`)
+— the fix was to drop the leading slash and pass a plain `C:/Users/...`
+path, still with `MSYS2_ARG_CONV_EXCL="*"` set. If `--script` fails with a
+module-not-found or path error, try both forms before falling back to
+`--eval`. Separately, simulating a login form via `--eval` by setting
+`input.value` directly on two fields back-to-back is unreliable — setting
+the second field can silently reset the first back to empty (React
+batches/re-renders the controlled inputs together and one handler's
+`setState` can overwrite the other using a stale prior value); a double
+`requestAnimationFrame` wait between the two field updates fixed it most of
+the time but not reliably. Use Playwright's `page.locator(...).fill(...)`
+inside a real `--script` file instead — reliable once the path form above is
+right for the current extension version.

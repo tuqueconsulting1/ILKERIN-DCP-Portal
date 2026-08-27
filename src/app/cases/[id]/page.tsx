@@ -143,11 +143,11 @@ export default async function CaseDetailPage({
     .order("received_date", { ascending: false });
 
   return (
-    <div className="flex-1 bg-zinc-50 px-6 py-8">
+    <div className="flex-1 bg-zinc-50 dark:bg-zinc-950 px-6 py-8">
       <div className="animate-fade-in mx-auto max-w-4xl space-y-6">
         <div>
           <div className="flex items-baseline justify-between">
-            <Link href="/" className="text-sm text-zinc-500 transition-colors hover:text-brand-dark">
+            <Link href="/" className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
               ← Back to whiteboard
             </Link>
             <GuideMeButton steps={CASE_TOUR} label="Guide me through this case" />
@@ -160,17 +160,17 @@ export default async function CaseDetailPage({
                 companyName={client.company_name}
               />
             )}
-            <span className="text-sm text-zinc-500">{application.completion_pct}% complete</span>
+            <span className="text-sm text-zinc-500 dark:text-zinc-400">{application.completion_pct}% complete</span>
           </div>
           <div className="flex items-center justify-between">
-            <p className={`text-sm font-medium ${locked ? "text-green-700" : "text-brand-dark"}`}>
+            <p className={`text-sm font-medium ${locked ? "text-green-700 dark:text-green-400" : "text-brand-dark dark:text-brand"}`}>
               {locked ? "Complete" : STAGE_LABEL[application.stage]}
             </p>
             <div className="flex items-center gap-2">
               <Link
                 data-tour="visualize-progress"
                 href={`/cases/${id}/progress`}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:border-brand hover:text-brand-dark"
+                className="rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:border-brand hover:text-brand-dark dark:hover:text-brand"
               >
                 Visualize progress
               </Link>
@@ -202,15 +202,15 @@ export default async function CaseDetailPage({
         />
 
         <section data-tour="checklist">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-700">Checklist</h2>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Checklist</h2>
           <DocumentChecklist applicationId={id} documents={currentStageDocuments} locked={locked} />
         </section>
 
         {previousStages.length > 0 && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold text-zinc-700">Previous stages</h2>
-            <div className="rounded-lg border border-zinc-200 bg-white p-4">
-              <ul className="space-y-1 text-sm text-zinc-600">
+            <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Previous stages</h2>
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
+              <ul className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
                 {previousStages.map((s) => (
                   <li key={s.stage} className="flex justify-between">
                     <span>{STAGE_LABEL[s.stage] ?? s.stage}</span>
@@ -225,20 +225,20 @@ export default async function CaseDetailPage({
         )}
 
         <section data-tour="tasks">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-700">Tasks</h2>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Tasks</h2>
           <TaskList applicationId={id} tasks={tasks ?? []} locked={locked} />
         </section>
 
         <section data-tour="cbk-log">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-700">CBK correspondence</h2>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">CBK correspondence</h2>
           <CbkLog applicationId={id} entries={cbkCorrespondence ?? []} locked={locked} />
         </section>
 
         {client && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold text-red-700">Danger zone</h2>
-            <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-zinc-600">
+            <h2 className="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
+            <div className="flex items-center justify-between rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 p-4">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 Permanently delete this client and everything tied to their case.
               </p>
               <DeleteClientDialog clientId={client.id} companyName={client.company_name} />

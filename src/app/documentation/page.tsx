@@ -34,9 +34,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-20 border-t border-zinc-200 pt-8 first:border-0 first:pt-0">
-      <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-zinc-700">{children}</div>
+    <section id={id} className="scroll-mt-20 border-t border-zinc-200 dark:border-zinc-700 pt-8 first:border-0 first:pt-0">
+      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+      <div className="mt-3 space-y-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{children}</div>
     </section>
   );
 }
@@ -47,16 +47,16 @@ function Step({ children }: { children: React.ReactNode }) {
 
 export default function DocumentationPage() {
   return (
-    <div className="flex-1 bg-zinc-50 px-6 py-8">
+    <div className="flex-1 bg-zinc-50 dark:bg-zinc-950 px-6 py-8">
       <div className="mx-auto flex max-w-5xl gap-10">
         <nav className="sticky top-8 hidden h-fit w-56 shrink-0 lg:block">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
             On this page
           </p>
           <ul className="space-y-1.5 text-sm">
             {SECTIONS.map((s) => (
               <li key={s.id}>
-                <a href={`#${s.id}`} className="text-zinc-500 transition-colors hover:text-brand-dark">
+                <a href={`#${s.id}`} className="text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
                   {s.label}
                 </a>
               </li>
@@ -66,11 +66,11 @@ export default function DocumentationPage() {
 
         <div className="animate-fade-in min-w-0 flex-1 space-y-8">
           <div>
-            <Link href="/" className="text-sm text-zinc-500 transition-colors hover:text-brand-dark">
+            <Link href="/" className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
               ← Back to the app
             </Link>
-            <h1 className="mt-2 text-2xl font-semibold text-zinc-900">Case Manager Guide</h1>
-            <p className="mt-1 text-sm text-zinc-500">
+            <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Case Manager Guide</h1>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               A plain-language walkthrough of the Ilkerin DCP Portal — no technical background
               needed. If you’d rather learn by clicking than reading, use the{" "}
               <strong>Guide me</strong> button inside the app instead (see the last section below).
@@ -296,7 +296,7 @@ export default function DocumentationPage() {
               bottom of their case page and click <strong>Delete client</strong>. This permanently
               removes the client and everything tied to their case — there’s no undo, so as a
               safeguard you’ll need to type the exact phrase shown (e.g.{" "}
-              <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">delete Acme Ltd</code>)
+              <code className="rounded bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 text-xs">delete Acme Ltd</code>)
               before the delete button will work.
             </p>
           </Section>

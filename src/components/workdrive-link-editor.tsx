@@ -40,16 +40,16 @@ export function WorkdriveLinkEditor({
             href={initialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-dark underline transition-colors hover:text-brand"
+            className="text-brand-dark dark:text-brand underline transition-colors hover:text-brand"
           >
             Open WorkDrive folder
           </a>
         ) : (
-          <span className="text-zinc-400">No WorkDrive folder linked yet</span>
+          <span className="text-zinc-400 dark:text-zinc-500">No WorkDrive folder linked yet</span>
         )}
         <button
           onClick={() => setEditing(true)}
-          className="text-xs text-zinc-500 transition-colors hover:text-zinc-700"
+          className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
         >
           {initialUrl ? "Edit" : "Link folder"}
         </button>
@@ -64,7 +64,7 @@ export function WorkdriveLinkEditor({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="https://workdrive.zoho.com/..."
-        className="w-72 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+        className="w-72 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 dark:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
       />
       <button
         onClick={save}
@@ -75,11 +75,11 @@ export function WorkdriveLinkEditor({
       </button>
       <button
         onClick={() => setEditing(false)}
-        className="text-xs text-zinc-500 transition-colors hover:text-zinc-700"
+        className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
       >
         Cancel
       </button>
-      {error && <span className="animate-fade-in text-xs text-red-600">{error}</span>}
+      {error && <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>
   );
 }

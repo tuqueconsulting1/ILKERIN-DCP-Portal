@@ -1,10 +1,24 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (not prefers-color-scheme): the app is only ever
+   dark when <html> has the "dark" class, toggled deliberately by
+   ThemeToggle and persisted in localStorage. This is intentional — the
+   original attempt at automatic OS-driven dark mode made form inputs
+   inherit a near-white foreground color with no matching background,
+   rendering typed text invisible. Every dark: variant below is added
+   explicitly per element, so nothing is dark by accident. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #212629;
   --color-brand: #f85814;
   --color-brand-dark: #212629;
+}
+
+.dark {
+  --background: #18181b;
+  --foreground: #f4f4f5;
 }
 
 @theme inline {
@@ -16,15 +30,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Deliberately no prefers-color-scheme override: the app stays on this fixed
-   light palette so brand colors render consistently, and so form inputs
-   never inherit a near-white "dark mode" foreground color that would make
-   typed text invisible against their white background. */
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Orange dot-grid background decoration, used on the dashboard. Dot color
+   and opacity are tuned separately for light/dark so it reads as a subtle
+   texture in both, never competing with foreground content. Faded via a
+   mask so it reads as an accent near the top rather than a busy pattern
+   covering the whole page. */
+.dot-grid-bg {
+  background-image: radial-gradient(circle, rgba(248, 88, 20, 0.45) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent);
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.dark .dot-grid-bg {
+  background-image: radial-gradient(circle, rgba(248, 88, 20, 0.35) 1px, transparent 1px);
 }
 
 @keyframes fade-in {

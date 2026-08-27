@@ -17,7 +17,7 @@ export function SignOutButton() {
     <button
       data-tour="sign-out"
       onClick={handleSignOut}
-      className="text-sm text-zinc-500 transition-colors hover:text-brand-dark"
+      className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand"
     >
       Sign out
     </button>

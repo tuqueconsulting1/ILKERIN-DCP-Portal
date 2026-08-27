@@ -90,7 +90,7 @@ export function GuideMeButton({ steps, label = "Guide me" }: { steps: TourStep[]
     <>
       <button
         onClick={start}
-        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:border-brand hover:text-brand-dark"
+        className="rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:border-brand hover:text-brand-dark dark:hover:text-brand"
       >
         ✨ {label}
       </button>
@@ -113,18 +113,18 @@ export function GuideMeButton({ steps, label = "Guide me" }: { steps: TourStep[]
           )}
 
           <div
-            className="animate-scale-in fixed z-[101] w-72 rounded-lg bg-white p-4 shadow-xl"
+            className="animate-scale-in fixed z-[101] w-72 rounded-lg bg-white dark:bg-zinc-800 p-4 shadow-xl"
             style={tooltipStyle(rect)}
           >
             <p className="text-xs font-medium text-brand">
               Step {index + 1} of {steps.length}
             </p>
-            <h3 className="mt-1 text-sm font-semibold text-zinc-900">{step.title}</h3>
-            <p className="mt-1 text-sm text-zinc-600">{step.body}</p>
+            <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{step.title}</h3>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{step.body}</p>
             <div className="mt-3 flex items-center justify-between">
               <button
                 onClick={() => setActive(false)}
-                className="text-xs text-zinc-400 transition-colors hover:text-zinc-600"
+                className="text-xs text-zinc-400 dark:text-zinc-500 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
               >
                 Skip tour
               </button>
@@ -132,7 +132,7 @@ export function GuideMeButton({ steps, label = "Guide me" }: { steps: TourStep[]
                 {index > 0 && (
                   <button
                     onClick={back}
-                    className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600 transition-colors hover:border-zinc-400"
+                    className="rounded-md border border-zinc-300 dark:border-zinc-600 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 transition-colors hover:border-zinc-400 dark:hover:border-zinc-500"
                   >
                     Back
                   </button>

@@ -28,17 +28,17 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
   }
 
   return (
-    <li className="animate-fade-in text-zinc-700">
+    <li className="animate-fade-in text-zinc-700 dark:text-zinc-300">
       <p>{entry.query_text}</p>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Received {entry.received_date} · due {entry.response_deadline ?? "—"} · {entry.response_status}
       </p>
-      {entry.response_text && <p className="text-xs text-zinc-600">Response: {entry.response_text}</p>}
+      {entry.response_text && <p className="text-xs text-zinc-600 dark:text-zinc-400">Response: {entry.response_text}</p>}
       {!locked && entry.response_status !== "responded" && (
         <button
           disabled={pending}
           onClick={respond}
-          className="mt-1 text-xs font-medium text-zinc-600 transition-colors hover:text-brand-dark disabled:opacity-50"
+          className="mt-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand disabled:opacity-50"
         >
           Mark responded
         </button>
@@ -78,7 +78,7 @@ export function CbkLog({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
       {entries.length > 0 ? (
         <ul className="space-y-2 text-sm">
           {entries.map((entry) => (
@@ -86,33 +86,33 @@ export function CbkLog({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-zinc-500">No CBK correspondence logged.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">No CBK correspondence logged.</p>
       )}
 
       {!locked && (
-        <form ref={formRef} onSubmit={handleSubmit} className="mt-3 space-y-2 border-t border-zinc-100 pt-3">
+        <form ref={formRef} onSubmit={handleSubmit} className="mt-3 space-y-2 border-t border-zinc-100 dark:border-zinc-700 pt-3">
           <textarea
             name="queryText"
             placeholder="What did CBK ask?"
             required
             rows={2}
-            className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 dark:text-zinc-400 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
           <div className="flex gap-2">
-            <label className="flex-1 text-xs text-zinc-500">
+            <label className="flex-1 text-xs text-zinc-500 dark:text-zinc-400">
               Received
               <input
                 name="receivedDate"
                 type="date"
-                className="mt-0.5 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="mt-0.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
             </label>
-            <label className="flex-1 text-xs text-zinc-500">
+            <label className="flex-1 text-xs text-zinc-500 dark:text-zinc-400">
               Response due
               <input
                 name="responseDeadline"
                 type="date"
-                className="mt-0.5 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="mt-0.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
             </label>
           </div>
@@ -125,7 +125,7 @@ export function CbkLog({
           </button>
         </form>
       )}
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
