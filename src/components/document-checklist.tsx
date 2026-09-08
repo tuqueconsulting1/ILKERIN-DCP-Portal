@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateDocumentStatus } from "@/app/actions/documents";
+import { reorderChecklistTemplates } from "@/app/actions/checklist-templates";
 
 export type ChecklistDocument = {
   id: string;
@@ -10,6 +11,7 @@ export type ChecklistDocument = {
   owner_tag: string;
   expiry_date: string | null;
   item_name: string;
+  checklistTemplateId: string;
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -37,6 +39,8 @@ export function DocumentChecklist({
   const [localDocs, setLocalDocs] = useState(documents);
   const [prevDocuments, setPrevDocuments] = useState(documents);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [reorderError, setReorderError] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
   const router = useRouter();
 
   // Re-sync from fresh server props (e.g. once the background refresh below
@@ -44,6 +48,35 @@ export function DocumentChecklist({
   if (documents !== prevDocuments) {
     setPrevDocuments(documents);
     setLocalDocs(documents);
+  }
+
+  function moveDoc(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return;
+
+    const previousOrder = localDocs;
+    const next = [...localDocs];
+    const sourceIndex = next.findIndex((d) => d.id === sourceId);
+    const targetIndex = next.findIndex((d) => d.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const [moved] = next.splice(sourceIndex, 1);
+    next.splice(targetIndex, 0, moved);
+
+    setLocalDocs(next);
+    setReorderError(null);
+
+    // Checklist order lives on the shared checklist_templates row (see
+    // 0014), so this persists for every application at this stage, not just
+    // this one — reorder writes are compliance/admin-only via RLS.
+    reorderChecklistTemplates(
+      applicationId,
+      next.map((d) => d.checklistTemplateId),
+    ).then((result) => {
+      if (result?.error) {
+        setLocalDocs(previousOrder);
+        setReorderError(result.error);
+      }
+    });
   }
 
   function setStatus(documentId: string, status: string) {
@@ -69,9 +102,15 @@ export function DocumentChecklist({
 
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+      {reorderError && (
+        <p className="animate-fade-in border-b border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 px-4 py-2 text-xs text-red-600 dark:text-red-400">
+          Couldn&apos;t save the new order: {reorderError}
+        </p>
+      )}
       <table className="w-full text-left text-sm">
         <thead className="bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
           <tr>
+            <th className="w-6 px-2 py-2" aria-hidden="true"></th>
             <th className="px-4 py-2 font-medium">Item</th>
             <th className="px-4 py-2 font-medium">Owner</th>
             <th className="px-4 py-2 font-medium">Status</th>
@@ -82,7 +121,35 @@ export function DocumentChecklist({
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
           {localDocs.map((doc) => (
-            <tr key={doc.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50">
+            <tr
+              key={doc.id}
+              onDragOver={(e) => {
+                if (locked) return;
+                e.preventDefault();
+              }}
+              onDrop={(e) => {
+                if (locked || !dragId) return;
+                e.preventDefault();
+                moveDoc(dragId, doc.id);
+                setDragId(null);
+              }}
+              className={`transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50 ${dragId === doc.id ? "opacity-50" : ""}`}
+            >
+              <td className="px-2 py-3 text-center">
+                {!locked && (
+                  <span
+                    draggable
+                    onDragStart={() => setDragId(doc.id)}
+                    onDragEnd={() => setDragId(null)}
+                    role="button"
+                    aria-label={`Drag to reorder ${doc.item_name}`}
+                    title="Drag to reorder"
+                    className="inline-block cursor-grab select-none text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 active:cursor-grabbing"
+                  >
+                    ⠿
+                  </span>
+                )}
+              </td>
               <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">{doc.item_name}</td>
               <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 capitalize">{doc.owner_tag}</td>
               <td className="px-4 py-3">
@@ -138,7 +205,7 @@ export function DocumentChecklist({
           ))}
           {localDocs.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              <td colSpan={7} className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
                 No checklist items for this application.
               </td>
             </tr>

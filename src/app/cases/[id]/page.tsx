@@ -78,7 +78,7 @@ export default async function CaseDetailPage({
   const { data: documentsRaw } = await supabase
     .from("documents")
     .select(
-      "id, status, owner_tag, expiry_date, checklist_template:checklist_templates(item_name, stage)",
+      "id, status, owner_tag, expiry_date, checklist_template:checklist_templates(id, item_name, stage, sort_order)",
     )
     .eq("application_id", id);
 
@@ -94,17 +94,21 @@ export default async function CaseDetailPage({
       expiry_date: doc.expiry_date,
       item_name: template?.item_name ?? "Unknown item",
       stage: template?.stage,
+      checklistTemplateId: template?.id ?? doc.id,
+      sortOrder: template?.sort_order ?? 0,
     };
   });
 
   const currentStageDocuments: ChecklistDocument[] = normalizedDocuments
     .filter((doc) => doc.stage === application.stage)
-    .map(({ id, status, owner_tag, expiry_date, item_name }) => ({
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId }) => ({
       id,
       status,
       owner_tag,
       expiry_date,
       item_name,
+      checklistTemplateId,
     }));
 
   const previousStages = Object.values(
