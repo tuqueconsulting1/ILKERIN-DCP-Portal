@@ -181,3 +181,51 @@ export function extractFolderIdFromUrl(url: string | null): string | null {
   const match = url.match(/\/folder\/([a-zA-Z0-9_-]+)/);
   return match ? match[1] : null;
 }
+
+export type UploadedWorkdriveFile = {
+  fileId: string;
+  fileName: string;
+  url: string;
+};
+
+/**
+ * Uploads a file's bytes into a WorkDrive folder. Unlike the rest of this
+ * module's calls, WorkDrive's upload endpoint takes multipart/form-data with
+ * the destination/filename as query params (not a JSON body), so this
+ * bypasses the zohoApi() JSON helper and builds the request directly.
+ */
+export async function uploadFileToWorkdrive(
+  parentFolderId: string,
+  file: { name: string; type: string; buffer: Buffer },
+): Promise<UploadedWorkdriveFile> {
+  const accessToken = await getAccessToken();
+
+  const form = new FormData();
+  form.append(
+    "content",
+    new Blob([new Uint8Array(file.buffer)], { type: file.type || "application/octet-stream" }),
+    file.name,
+  );
+
+  const url = `${ZOHO_API_DOMAIN}/workdrive/api/v1/upload?filename=${encodeURIComponent(file.name)}&parent_id=${parentFolderId}&override-name-exist=true`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    body: form,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || data.errors) {
+    throw new Error(`Zoho upload error: ${JSON.stringify(data)}`);
+  }
+
+  const uploaded = data.data[0].attributes as Record<string, unknown>;
+
+  return {
+    fileId: uploaded.resource_id as string,
+    fileName: uploaded.FileName as string,
+    url: uploaded.Permalink as string,
+  };
+}

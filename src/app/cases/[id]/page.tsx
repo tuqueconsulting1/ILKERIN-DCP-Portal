@@ -142,7 +142,9 @@ export default async function CaseDetailPage({
 
   const { data: cbkCorrespondence } = await supabase
     .from("cbk_correspondence")
-    .select("id, query_text, received_date, response_deadline, response_status, response_text")
+    .select(
+      "id, query_text, received_date, response_deadline, response_status, response_text, query_zoho_file_url, query_zoho_file_name, response_zoho_file_url, response_zoho_file_name",
+    )
     .eq("application_id", id)
     .order("received_date", { ascending: false });
 

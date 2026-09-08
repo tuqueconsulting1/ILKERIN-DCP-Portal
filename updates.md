@@ -5,13 +5,29 @@ implementation complexity. Ordering is grounded in the current schema/code,
 not just gut feel — each item notes what already exists to build on and
 what's genuinely new. Complexity tiers: 🟢 Light · 🟡 Medium · 🟠 Heavy · 🔴 Heaviest.
 
-- [ ] **1. CBK correspondence attachments** 🟢 Light
-      Allow attachments in any format on `cbk_correspondence`.
-      `cbk_correspondence` currently has no file field at all (text-only:
-      `query_text`/`response_text`). Add `zoho_file_id`/`zoho_file_url`
-      column(s) — mirrors the pattern `documents` already uses — and reuse
-      the existing Zoho WorkDrive upload wiring. No new permission model,
-      no schema redesign.
+- [x] **1. CBK correspondence attachments** 🟡 Medium (revised up from 🟢) — **built this session**
+      Correction to the original estimate: there was no existing "Zoho
+      upload wiring" to reuse — every prior Zoho file reference came from
+      matching files clients dropped externally into their own WorkDrive
+      folder, or from folder creation, never from the app uploading file
+      *bytes* anywhere. Had to add that capability from scratch:
+      `uploadFileToWorkdrive()` in `lib/zoho.ts`, hitting WorkDrive's
+      multipart `/upload` endpoint — verified against the **live** Zoho API
+      with a real test upload (and cleaned up after) before wiring it in,
+      since the request shape (query-param destination + a single
+      multipart `content` field, distinct from every other JSON-bodied call
+      in that file) isn't well documented.
+      Six new columns on `cbk_correspondence`
+      (`0017_cbk_correspondence_attachments.sql`): separate
+      `query_zoho_file_*` / `response_zoho_file_*` triples, since a query
+      and its response can each carry their own document. Files upload
+      into the client's existing root WorkDrive folder — no new subfolder
+      was added, to keep this scoped. `cbk-log.tsx`'s "Mark responded" flow
+      changed from a `window.prompt()` to a small inline form, since a
+      browser prompt can't collect a file. Type-check and production build
+      both pass; **not yet verified against the live app** — `0017` hasn't
+      been applied to Supabase yet, and there were no credentials on hand
+      to test an actual upload through the UI this session.
 
 - [ ] **2. Collaboration (equal view + invite)** 🟢 Light
       RLS already grants every staff member (`is_staff()`) full read/write
