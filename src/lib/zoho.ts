@@ -229,3 +229,33 @@ export async function uploadFileToWorkdrive(
     url: uploaded.Permalink as string,
   };
 }
+
+export type DownloadedWorkdriveFile = {
+  buffer: Buffer;
+  contentType: string;
+};
+
+/**
+ * Downloads a file's bytes using the app's own Zoho service account. The
+ * Permalink returned by uploadFileToWorkdrive() only opens for someone who is
+ * themselves a member of this Zoho org with access to that resource, which
+ * most case managers using this app are not (they authenticate via Supabase,
+ * not Zoho) -- so viewing an attachment goes through this instead, proxied
+ * by a route that already checks the viewer has a valid app session.
+ */
+export async function downloadWorkdriveFile(fileId: string): Promise<DownloadedWorkdriveFile> {
+  const accessToken = await getAccessToken();
+
+  const res = await fetch(`${ZOHO_API_DOMAIN}/workdrive/api/v1/download/${fileId}`, {
+    headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Zoho download error (${res.status})`);
+  }
+
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const contentType = res.headers.get("content-type") ?? "application/octet-stream";
+
+  return { buffer, contentType };
+}

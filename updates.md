@@ -24,10 +24,26 @@ what's genuinely new. Complexity tiers: 🟢 Light · 🟡 Medium · 🟠 Heavy 
       into the client's existing root WorkDrive folder — no new subfolder
       was added, to keep this scoped. `cbk-log.tsx`'s "Mark responded" flow
       changed from a `window.prompt()` to a small inline form, since a
-      browser prompt can't collect a file. Type-check and production build
-      both pass; **not yet verified against the live app** — `0017` hasn't
-      been applied to Supabase yet, and there were no credentials on hand
-      to test an actual upload through the UI this session.
+      browser prompt can't collect a file.
+      **Follow-up hardening (same session, after a user request):** a
+      hard 8MB cap (`lib/attachments.ts`, shared by the client-side
+      pre-check and the actual server-side enforcement in `actions/cbk.ts`)
+      — also had to raise Next's `serverActions.bodySizeLimit` from its 1MB
+      default in `next.config.ts`, or every attachment over 1MB would have
+      been rejected by the framework before ever reaching that check. And a
+      real "view in browser" gap: the stored Zoho `Permalink` only opens for
+      someone who is themselves a member of this Zoho org, which case
+      managers aren't (they authenticate via Supabase, not Zoho) — verified
+      this live before assuming it. Fixed by adding
+      `downloadWorkdriveFile()` plus a new `/api/attachments/[fileId]`
+      route that proxies the file through the app's own Zoho service
+      account after checking the viewer has a valid app session, so
+      viewing works for every signed-in staff member regardless of their
+      own Zoho access.
+      Type-check and production build both pass; **not yet verified against
+      the live app** — `0017` hasn't been applied to Supabase yet, and
+      there were no credentials on hand to test an actual upload/view
+      through the UI this session.
 
 - [ ] **2. Collaboration (equal view + invite)** 🟢 Light
       RLS already grants every staff member (`is_staff()`) full read/write

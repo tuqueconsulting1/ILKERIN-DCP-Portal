@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { logCbkQuery, markCbkResponded } from "@/app/actions/cbk";
+import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MB } from "@/lib/attachments";
 
 export type CbkEntry = {
   id: string;
@@ -11,20 +12,35 @@ export type CbkEntry = {
   response_deadline: string | null;
   response_status: string;
   response_text: string | null;
-  query_zoho_file_url: string | null;
+  query_zoho_file_id: string | null;
   query_zoho_file_name: string | null;
-  response_zoho_file_url: string | null;
+  response_zoho_file_id: string | null;
   response_zoho_file_name: string | null;
 };
 
 const fileInputClass =
   "block w-full text-xs text-zinc-500 dark:text-zinc-400 file:mr-2 file:rounded-md file:border-0 file:bg-zinc-100 dark:file:bg-zinc-700 file:px-2 file:py-1 file:text-xs file:font-medium file:text-zinc-700 dark:file:text-zinc-300";
 
-function Attachment({ url, name }: { url: string | null; name: string | null }) {
-  if (!url) return null;
+/** Fast client-side feedback only -- the server action re-checks this. */
+function rejectOversizedFile(e: React.ChangeEvent<HTMLInputElement>, setError: (msg: string | null) => void) {
+  const file = e.target.files?.[0];
+  if (file && file.size > MAX_ATTACHMENT_BYTES) {
+    setError(`That file is too large -- attachments are limited to ${MAX_ATTACHMENT_MB}MB.`);
+    e.target.value = "";
+    return;
+  }
+  setError(null);
+}
+
+function Attachment({ fileId, name }: { fileId: string | null; name: string | null }) {
+  if (!fileId) return null;
+  // Proxied through our own server (see api/attachments/[fileId]) rather than
+  // linking Zoho's permalink directly -- that link only opens for someone
+  // who is themselves a member of the Zoho org, which case managers aren't.
+  const href = `/api/attachments/${fileId}?name=${encodeURIComponent(name ?? "attachment")}`;
   return (
     <a
-      href={url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="text-xs text-brand-dark dark:text-brand underline underline-offset-2"
@@ -62,9 +78,9 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Received {entry.received_date} · due {entry.response_deadline ?? "—"} · {entry.response_status}
       </p>
-      <Attachment url={entry.query_zoho_file_url} name={entry.query_zoho_file_name} />
+      <Attachment fileId={entry.query_zoho_file_id} name={entry.query_zoho_file_name} />
       {entry.response_text && <p className="text-xs text-zinc-600 dark:text-zinc-400">Response: {entry.response_text}</p>}
-      <Attachment url={entry.response_zoho_file_url} name={entry.response_zoho_file_name} />
+      <Attachment fileId={entry.response_zoho_file_id} name={entry.response_zoho_file_name} />
 
       {!locked && entry.response_status !== "responded" && !responding && (
         <button
@@ -84,7 +100,13 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
             rows={2}
             className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
-          <input type="file" name="responseFile" className={fileInputClass} />
+          <input
+            type="file"
+            name="responseFile"
+            className={fileInputClass}
+            onChange={(e) => rejectOversizedFile(e, setError)}
+          />
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Max {MAX_ATTACHMENT_MB}MB</p>
           <div className="flex gap-2">
             <button
               type="submit"
@@ -177,7 +199,13 @@ export function CbkLog({
               />
             </label>
           </div>
-          <input type="file" name="queryFile" className={fileInputClass} />
+          <input
+            type="file"
+            name="queryFile"
+            className={fileInputClass}
+            onChange={(e) => rejectOversizedFile(e, setError)}
+          />
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Max {MAX_ATTACHMENT_MB}MB</p>
           <button
             type="submit"
             disabled={pending}

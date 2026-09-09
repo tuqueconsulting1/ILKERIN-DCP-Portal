@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractFolderIdFromUrl, uploadFileToWorkdrive } from "@/lib/zoho";
+import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MB } from "@/lib/attachments";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -28,6 +29,10 @@ async function uploadAttachment(
   file: File | null,
 ) {
   if (!file || file.size === 0) return { attachment: null } as const;
+
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    return { error: `That file is too large -- attachments are limited to ${MAX_ATTACHMENT_MB}MB.` } as const;
+  }
 
   const folderId = await resolveClientFolderId(supabase, applicationId);
   if (!folderId) {
