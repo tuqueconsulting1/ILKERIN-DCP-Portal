@@ -1,6 +1,6 @@
 -- Make the auto-advance checklist seeding idempotent. Now that a case
 -- manager can send an application back a stage (which resets that stage's
--- items rather than deleting the stage ahead of it — see the app's
+-- items rather than deleting the stage ahead of it - see the app's
 -- moveToPreviousStage action), a case could later re-advance through a
 -- stage whose documents already exist from before. Without this guard,
 -- re-advancing would insert duplicate document rows for the same checklist

@@ -76,7 +76,7 @@ export function AddClientDialog() {
 
               <div className="space-y-1">
                 <label htmlFor="stage" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Starting stage — the work to be done
+                  Starting stage - the work to be done
                 </label>
                 <select
                   id="stage"
@@ -84,9 +84,9 @@ export function AddClientDialog() {
                   defaultValue="stage_1"
                   className={inputClass}
                 >
-                  <option value="stage_1">Stage 1 — Approval of Name</option>
-                  <option value="stage_2">Stage 2 — Application for Licence</option>
-                  <option value="stage_3">Stage 3 — Data Submission & Licensing</option>
+                  <option value="stage_1">Stage 1 - Approval of Name</option>
+                  <option value="stage_2">Stage 2 - Application for Licence</option>
+                  <option value="stage_3">Stage 3 - Data Submission & Licensing</option>
                 </select>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   The full document checklist for this stage is created automatically.
@@ -106,7 +106,7 @@ export function AddClientDialog() {
                   className={inputClass}
                 />
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Leave blank for a brand-new client — a folder will be created automatically once
+                  Leave blank for a brand-new client - a folder will be created automatically once
                   that&apos;s set up.
                 </p>
               </div>

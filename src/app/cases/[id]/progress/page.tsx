@@ -4,9 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { ProgressRings, type RingStage } from "@/components/progress-rings";
 
 const STAGE_LABEL: Record<string, string> = {
-  stage_1: "Stage 1 — Approval of Name",
-  stage_2: "Stage 2 — Application for Licence",
-  stage_3: "Stage 3 — Data Submission & Licensing",
+  stage_1: "Stage 1 - Approval of Name",
+  stage_2: "Stage 2 - Application for Licence",
+  stage_3: "Stage 3 - Data Submission & Licensing",
 };
 
 const STAGE_ORDER = ["stage_1", "stage_2", "stage_3"] as const;
@@ -83,7 +83,7 @@ export default async function CaseProgressPage({
   const overallTotal = stages.reduce((sum, s) => sum + s.total, 0);
   // A completed case is 100% overall by definition, even if it was started
   // partway through (e.g. at Stage 3, skipping 1/2 as already done outside
-  // this app) — otherwise unreached stages' template capacity would count
+  // this app) - otherwise unreached stages' template capacity would count
   // against it, contradicting the "Complete" status shown on the case page.
   const overallPct =
     application.status === "complete"
@@ -106,7 +106,7 @@ export default async function CaseProgressPage({
           <Link href={`/cases/${id}`} className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
             ← Back to case
           </Link>
-          <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{client?.company_name} — Progress</h1>
+          <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">{client?.company_name} - Progress</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {application.status === "complete" ? "Complete" : STAGE_LABEL[application.stage]}
           </p>
@@ -127,7 +127,7 @@ export default async function CaseProgressPage({
                   <li key={i} className="flex items-center justify-between py-2">
                     <span className="text-zinc-800 dark:text-zinc-200">{item.item_name}</span>
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {STAGE_LABEL[item.stage]?.split(" — ")[0]} · {item.status}
+                      {STAGE_LABEL[item.stage]?.split(" - ")[0]} · {item.status}
                     </span>
                   </li>
                 ))}

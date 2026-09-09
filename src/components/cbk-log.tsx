@@ -76,7 +76,7 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
     <li className="animate-fade-in text-zinc-700 dark:text-zinc-300">
       <p>{entry.query_text}</p>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Received {entry.received_date} · due {entry.response_deadline ?? "—"} · {entry.response_status}
+        Received {entry.received_date} · due {entry.response_deadline ?? "-"} · {entry.response_status}
       </p>
       <Attachment fileId={entry.query_zoho_file_id} name={entry.query_zoho_file_name} />
       {entry.response_text && <p className="text-xs text-zinc-600 dark:text-zinc-400">Response: {entry.response_text}</p>}

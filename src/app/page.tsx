@@ -15,7 +15,7 @@ const DASHBOARD_TOUR: TourStep[] = [
   {
     selector: '[data-tour="view-toggle"]',
     title: "Board or list view",
-    body: "Switch between a Kanban-style board (grouped by stage) and a flat table — whichever gives you the view you need.",
+    body: "Switch between a Kanban-style board (grouped by stage) and a flat table - whichever gives you the view you need.",
   },
   {
     selector: '[data-tour="stage-column"]',

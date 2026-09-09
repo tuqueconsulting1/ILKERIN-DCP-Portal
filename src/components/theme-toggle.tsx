@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export const THEME_KEY = "ilkerin-dcp-theme";
 
 /** Inline, blocking script injected in <head> so the theme class is set
- * before first paint — avoids a flash of the wrong theme on load. Reads
+ * before first paint - avoids a flash of the wrong theme on load. Reads
  * localStorage only; never auto-follows OS preference (see globals.css). */
 export const themeInitScript = `
 (function () {
@@ -19,7 +19,7 @@ export const themeInitScript = `
 export function ThemeToggle() {
   // Starts "light" to match the server-rendered HTML (document isn't
   // available during SSR), then syncs to whatever the blocking script
-  // above already applied to <html> before this component ever mounted —
+  // above already applied to <html> before this component ever mounted -
   // the actual dark-mode styling doesn't depend on this state at all
   // (that's driven by the "dark" class directly), this is only for the
   // button's own icon.

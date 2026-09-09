@@ -119,7 +119,7 @@ export function SuperAdminDashboard({ initialEmails }: { initialEmails: AllowedE
             {emails.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  No emails allowed yet — add one above.
+                  No emails allowed yet - add one above.
                 </td>
               </tr>
             )}

@@ -14,9 +14,9 @@ import { CbkLog } from "@/components/cbk-log";
 import { GuideMeButton, type TourStep } from "@/components/guided-tour";
 
 const STAGE_LABEL: Record<string, string> = {
-  stage_1: "Stage 1 — Approval of Name",
-  stage_2: "Stage 2 — Application for Licence",
-  stage_3: "Stage 3 — Data Submission & Licensing",
+  stage_1: "Stage 1 - Approval of Name",
+  stage_2: "Stage 2 - Application for Licence",
+  stage_3: "Stage 3 - Data Submission & Licensing",
 };
 
 const PREVIOUS_STAGE: Record<string, string | undefined> = {
@@ -33,7 +33,7 @@ const CASE_TOUR: TourStep[] = [
   {
     selector: '[data-tour="visualize-progress"]',
     title: "Visualize progress",
-    body: "A circular view of progress across all three stages, plus what's still outstanding — handy for a quick status check.",
+    body: "A circular view of progress across all three stages, plus what's still outstanding - handy for a quick status check.",
   },
   {
     selector: '[data-tour="checklist"]',
@@ -48,7 +48,7 @@ const CASE_TOUR: TourStep[] = [
   {
     selector: '[data-tour="cbk-log"]',
     title: "CBK correspondence",
-    body: "Log a query from CBK — it automatically creates a linked task with the response deadline as its due date.",
+    body: "Log a query from CBK - it automatically creates a linked task with the response deadline as its due date.",
   },
 ];
 

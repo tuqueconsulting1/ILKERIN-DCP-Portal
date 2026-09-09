@@ -1,7 +1,7 @@
 -- Bug found via testing: once 0009 made checklist seeding idempotent (no-op
 -- when the next stage's documents already exist, e.g. after a back-then-
 -- forward cycle), completion_pct stopped being recalculated for the stage
--- just advanced into — it previously only got recomputed as a side effect
+-- just advanced into - it previously only got recomputed as a side effect
 -- of the newly INSERTed rows each firing their own trigger call. With no
 -- rows to insert, completion_pct was left stuck at the previous stage's
 -- 100%. This recalculates it explicitly right after advancing, regardless

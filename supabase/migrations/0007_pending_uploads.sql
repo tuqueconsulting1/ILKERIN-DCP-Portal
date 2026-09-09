@@ -1,6 +1,6 @@
 -- Staging area for files the polling job finds in a client's WorkDrive
 -- folder that don't yet correspond to a checklist item. A case manager
--- manually matches each one to the right document (or ignores it) — see
+-- manually matches each one to the right document (or ignores it) - see
 -- PLAN.md's note on why automatic filename matching isn't reliable enough
 -- to be the only path.
 create type pending_upload_status as enum ('pending', 'matched', 'ignored');

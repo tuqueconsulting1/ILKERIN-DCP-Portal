@@ -1,6 +1,6 @@
 -- Lets compliance/admin drag-reorder checklist items (case page UI). Order is
 -- per checklist_templates row, so it's shared across every application at
--- that stage — reordering is a template-level (admin) change, not a
+-- that stage - reordering is a template-level (admin) change, not a
 -- per-case preference, matching the existing "compliance/admin can write
 -- checklist templates" RLS policy from 0002.
 alter table checklist_templates add column sort_order integer not null default 0;

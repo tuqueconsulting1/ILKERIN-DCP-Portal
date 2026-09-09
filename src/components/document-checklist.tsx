@@ -35,7 +35,7 @@ type DocGroup = {
 
 // Docs arrive pre-sorted by sort_order, which already nests category ->
 // subcategory -> item contiguously (see migration 0018), so a single pass
-// grouping adjacent same-category/subcategory runs is enough — no re-sort
+// grouping adjacent same-category/subcategory runs is enough - no re-sort
 // needed here.
 function groupDocuments(docs: ChecklistDocument[]): DocGroup[] {
   const groups: DocGroup[] = [];
@@ -62,7 +62,7 @@ export function DocumentChecklist({
 }) {
   // Optimistic local copy: the checkbox/buttons update this instantly, while
   // the server write and the resulting stage/completion recalculation happen
-  // in the background — no waiting on a full page refresh to see the click
+  // in the background - no waiting on a full page refresh to see the click
   // register. Re-synced whenever the server sends fresh props (e.g. after
   // the background refresh below lands, or on a real page navigation).
   const [localDocs, setLocalDocs] = useState(documents);
@@ -73,7 +73,7 @@ export function DocumentChecklist({
   const router = useRouter();
 
   // Re-sync from fresh server props (e.g. once the background refresh below
-  // lands) without an effect — see https://react.dev/learn/you-might-not-need-an-effect
+  // lands) without an effect - see https://react.dev/learn/you-might-not-need-an-effect
   if (documents !== prevDocuments) {
     setPrevDocuments(documents);
     setLocalDocs(documents);
@@ -86,7 +86,7 @@ export function DocumentChecklist({
     const target = localDocs.find((d) => d.id === targetId);
     if (!source || !target) return;
     // Dragging is only meaningful within the same category/subcategory
-    // section now that items are visually grouped — ignore cross-group drops.
+    // section now that items are visually grouped - ignore cross-group drops.
     if (source.category !== target.category || source.subcategory !== target.subcategory) return;
 
     const previousOrder = localDocs;
@@ -103,7 +103,7 @@ export function DocumentChecklist({
 
     // Checklist order lives on the shared checklist_templates row (see
     // 0014), so this persists for every application at this stage, not just
-    // this one — reorder writes are compliance/admin-only via RLS.
+    // this one - reorder writes are compliance/admin-only via RLS.
     reorderChecklistTemplates(
       applicationId,
       next.map((d) => d.checklistTemplateId),
@@ -192,7 +192,7 @@ export function DocumentChecklist({
             {doc.status}
           </span>
         </td>
-        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "—"}</td>
+        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "-"}</td>
         <td className="px-4 py-3">
           <input
             type="checkbox"
@@ -288,7 +288,7 @@ export function DocumentChecklist({
             <summary className="cursor-pointer select-none bg-zinc-50 dark:bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
               {group.category}
               {group.subcategory && (
-                <span className="ml-1 font-normal text-zinc-500 dark:text-zinc-400">— {group.subcategory}</span>
+                <span className="ml-1 font-normal text-zinc-500 dark:text-zinc-400">- {group.subcategory}</span>
               )}
             </summary>
             {renderTable(group.items)}

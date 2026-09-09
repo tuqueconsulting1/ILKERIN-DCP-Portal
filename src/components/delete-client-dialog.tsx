@@ -48,7 +48,7 @@ export function DeleteClientDialog({
           <div className="animate-scale-in w-full max-w-md rounded-lg bg-white dark:bg-zinc-800 p-6 shadow-lg">
             <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Delete {companyName}</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              This permanently deletes the client and everything tied to their case — the
+              This permanently deletes the client and everything tied to their case - the
               application, checklist, documents, tasks, and CBK correspondence. This cannot be
               undone.
             </p>

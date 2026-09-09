@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Logs an in-app notification when a document is marked "received" —
+ * Logs an in-app notification when a document is marked "received" -
  * either manually or via matching a WorkDrive upload. `notification_log`
  * is generic (see 0001's schema) so other event types can reuse this same
  * table later; this is the first thing to actually write to it.

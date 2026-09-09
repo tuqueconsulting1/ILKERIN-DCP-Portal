@@ -1,5 +1,5 @@
 -- Progress and item counts must be scoped to the application's CURRENT
--- stage, not every document ever attached to it — otherwise once a stage
+-- stage, not every document ever attached to it - otherwise once a stage
 -- auto-advances and the next stage's checklist is seeded alongside the
 -- already-completed previous stage's documents, counts blend both stages
 -- into one misleading number.
@@ -31,7 +31,7 @@ begin
     where id = target_application_id;
 
   -- Auto-advance once every item in the current stage is verified. Stage 3
-  -- deliberately does NOT auto-complete the case — that's an explicit
+  -- deliberately does NOT auto-complete the case - that's an explicit
   -- case-manager action ("licence received" button), not inferred here.
   if total_count > 0 and verified_count = total_count and target_stage <> 'stage_3' then
     next_stage := case target_stage

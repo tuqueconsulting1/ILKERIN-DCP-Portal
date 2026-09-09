@@ -119,7 +119,7 @@ const STAGE_SUBFOLDER_NAMES: Record<keyof StageSubfolders, string> = {
 /**
  * Creates the three stage subfolders inside a client's WorkDrive folder, so
  * documents can be organized by stage instead of dropped flat into one
- * folder. Best-effort per subfolder — a failure on one stage doesn't stop
+ * folder. Best-effort per subfolder - a failure on one stage doesn't stop
  * the others from being created.
  */
 export async function createStageSubfolders(parentFolderId: string): Promise<Partial<StageSubfolders>> {
@@ -146,7 +146,7 @@ export type WorkdriveFile = {
 
 /**
  * Lists the direct children of a WorkDrive folder, filtering out subfolders
- * — clients are expected to drop files directly into their folder, not
+ * - clients are expected to drop files directly into their folder, not
  * create their own subfolder structure.
  */
 export async function listFolderFiles(folderId: string): Promise<WorkdriveFile[]> {

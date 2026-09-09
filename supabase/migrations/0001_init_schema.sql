@@ -1,4 +1,4 @@
--- Ilkerin DCP Workflow Automation — initial schema
+-- Ilkerin DCP Workflow Automation - initial schema
 -- Entities per PLAN.md section 4.
 
 -- ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ create type notification_status as enum ('queued', 'sent', 'failed');
 create type application_status as enum ('active', 'complete', 'withdrawn');
 
 -- ---------------------------------------------------------------------------
--- Profiles (case managers / compliance / admin) — one row per auth.users id
+-- Profiles (case managers / compliance / admin) - one row per auth.users id
 -- ---------------------------------------------------------------------------
 
 create table profiles (
@@ -29,7 +29,7 @@ create table profiles (
 );
 
 -- ---------------------------------------------------------------------------
--- Checklist templates — versioned, compliance-team editable
+-- Checklist templates - versioned, compliance-team editable
 -- ---------------------------------------------------------------------------
 
 create table checklist_templates (
@@ -58,7 +58,7 @@ create table clients (
 );
 
 -- ---------------------------------------------------------------------------
--- Applications — one per client, tracks current stage/progress
+-- Applications - one per client, tracks current stage/progress
 -- ---------------------------------------------------------------------------
 
 create table applications (
@@ -75,7 +75,7 @@ create table applications (
 create index applications_client_id_idx on applications (client_id);
 
 -- ---------------------------------------------------------------------------
--- Shareholders / Directors — KYC & vetting status
+-- Shareholders / Directors - KYC & vetting status
 -- ---------------------------------------------------------------------------
 
 create table shareholders_directors (
@@ -90,7 +90,7 @@ create table shareholders_directors (
 create index shareholders_directors_client_id_idx on shareholders_directors (client_id);
 
 -- ---------------------------------------------------------------------------
--- Documents — one row per checklist item instance for an application
+-- Documents - one row per checklist item instance for an application
 -- ---------------------------------------------------------------------------
 
 create table documents (
@@ -113,7 +113,7 @@ create index documents_application_id_idx on documents (application_id);
 create index documents_expiry_date_idx on documents (expiry_date) where expiry_date is not null;
 
 -- ---------------------------------------------------------------------------
--- Tasks — generic, linked to any entity (document, cbk query, etc.)
+-- Tasks - generic, linked to any entity (document, cbk query, etc.)
 -- ---------------------------------------------------------------------------
 
 create table tasks (
@@ -134,7 +134,7 @@ create index tasks_owner_id_idx on tasks (owner_id);
 create index tasks_due_date_idx on tasks (due_date) where status = 'open';
 
 -- ---------------------------------------------------------------------------
--- CBK correspondence — query log & response deadlines
+-- CBK correspondence - query log & response deadlines
 -- ---------------------------------------------------------------------------
 
 create table cbk_correspondence (
@@ -184,7 +184,7 @@ create table notification_log (
 create index notification_log_application_id_idx on notification_log (related_application_id);
 
 -- ---------------------------------------------------------------------------
--- Audit log — append-only
+-- Audit log - append-only
 -- ---------------------------------------------------------------------------
 
 create table audit_log (

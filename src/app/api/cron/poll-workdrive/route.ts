@@ -6,7 +6,7 @@ import { extractFolderIdFromUrl, listFolderFiles } from "@/lib/zoho";
  * Polls every active application's WorkDrive folder for files the app
  * hasn't seen yet, and queues them as pending_uploads for a case manager to
  * match to a checklist item. Fallback/primary detection mechanism until a
- * webhook receiver is added — see MILESTONES.md Phase 2.
+ * webhook receiver is added - see MILESTONES.md Phase 2.
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");

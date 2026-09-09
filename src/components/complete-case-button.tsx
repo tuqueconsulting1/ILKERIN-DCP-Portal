@@ -33,7 +33,7 @@ export function CompleteCaseButton({ applicationId }: { applicationId: string })
         disabled={pending}
         className="rounded-md bg-green-700 px-3 py-1.5 text-sm font-medium text-white transition-all hover:bg-green-800 active:scale-[0.98] disabled:opacity-50"
       >
-        {pending ? "Completing…" : "Licence received — Complete case"}
+        {pending ? "Completing…" : "Licence received - Complete case"}
       </button>
       {error && <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{error}</span>}
     </div>

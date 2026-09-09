@@ -84,7 +84,7 @@ export async function moveToPreviousStage(applicationId: string) {
     return { error: stageErr.message };
   }
 
-  // Reset the stage being returned to so it requires fresh verification —
+  // Reset the stage being returned to so it requires fresh verification -
   // otherwise its items are still all "verified" from before, and the
   // auto-advance trigger would immediately send the case forward again on
   // the next document event.

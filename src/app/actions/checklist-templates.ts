@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Persists a new display order for a stage's checklist items. This edits
  * checklist_templates directly, so the new order applies to every
- * application at that stage, not just the one the drag happened on — RLS
+ * application at that stage, not just the one the drag happened on - RLS
  * already restricts this write to compliance/admin (see 0002).
  */
 export async function reorderChecklistTemplates(

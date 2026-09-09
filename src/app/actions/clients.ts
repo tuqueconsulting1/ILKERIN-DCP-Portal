@@ -78,7 +78,7 @@ export async function addClient(
   // Organize the folder by stage, whether it was just auto-created or is an
   // existing folder the case manager linked. Best-effort: if the folder id
   // couldn't be resolved (e.g. an external share link rather than an
-  // internal folder link), stage subfolders just aren't created — nothing
+  // internal folder link), stage subfolders just aren't created - nothing
   // else about adding the client is blocked by this.
   if (rootFolderId) {
     try {

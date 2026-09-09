@@ -38,7 +38,7 @@ export default function LoginPage() {
     setError(null);
     const supabase = createClient();
     // "custom:zoho" is a Supabase custom OIDC provider (configured in the
-    // dashboard, not in code) — the installed SDK's Provider type predates
+    // dashboard, not in code) - the installed SDK's Provider type predates
     // custom-provider support, hence the cast.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "custom:zoho" as unknown as Parameters<
@@ -51,7 +51,7 @@ export default function LoginPage() {
       setError(error.message);
     }
     // On success the browser is redirected to Zoho, so there's nothing else
-    // to do here — the callback route picks up from there.
+    // to do here - the callback route picks up from there.
   }
 
   return (

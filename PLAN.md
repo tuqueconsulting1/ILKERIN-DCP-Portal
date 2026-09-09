@@ -1,4 +1,4 @@
-# Ilkerin DCP Licensing Workflow Automation — Development Plan
+# Ilkerin DCP Licensing Workflow Automation - Development Plan
 
 Status: Draft for review
 Source documents: `Ilkerin DCP automation blueprint.pdf` (proposal), `Features.md` (distilled decisions)
@@ -8,9 +8,9 @@ Source documents: `Ilkerin DCP automation blueprint.pdf` (proposal), `Features.m
 Ilkerin Consulting helps client companies obtain a Digital Credit Provider (DCP) licence
 from the Central Bank of Kenya (CBK). The licensing journey has three formal stages:
 
-1. **Stage 1 — Approval of Name**: name reservation & KIPI letter.
-2. **Stage 2 — Application for Licence**: the most document-intensive stage.
-3. **Stage 3 — Data Submission & Licensing**: API testing, fees, licence issuance.
+1. **Stage 1 - Approval of Name**: name reservation & KIPI letter.
+2. **Stage 2 - Application for Licence**: the most document-intensive stage.
+3. **Stage 3 - Data Submission & Licensing**: API testing, fees, licence issuance.
 
 Each stage has a fixed document checklist, and each checklist item is tagged with an
 owner: **client**, **Ilkerin**, or **joint**.
@@ -42,10 +42,10 @@ simplification is treated as the standing decision for this build:
 | Webapp vs. desktop+mobile (Features.md literally called for lightweight desktop + mobile apps, no domain, for data protection) | **Internal webapp**, built as an installable PWA. Access is gated by login (see Auth below) rather than network isolation, since hosting is Vercel (public URL by default). Modular enough to wrap in Tauri/Electron later if native desktop/mobile is revisited. |
 | Zoho WorkDrive API access | Case manager confirmed access is available or obtainable soon. Plan assumes real API/webhook integration from Phase 2 rather than a long-lived mock. |
 | Hosting | **Vercel** (frontend + serverless/edge functions) + **Supabase** (Postgres database, Auth, Realtime, Storage, Edge Functions). |
-| Tech stack | **Next.js/TypeScript** (React) on Vercel — the natural pairing for Vercel hosting — with **Supabase** as the backend-as-a-service: Postgres for the data model, Supabase Auth for case-manager login, Supabase Realtime for live dashboard updates, Supabase Edge Functions for scheduled jobs (reminders, expiry checks) and Zoho webhook receivers. |
-| Case-manager auth | **Email + password**, via Supabase Auth (built-in — no custom auth code needed). |
-| Push notifications | Confirmed in scope as a secondary channel alongside email — see section 6. |
-| E-signature | **Dropped.** Confirmed out of scope — no signed-document flow needed. |
+| Tech stack | **Next.js/TypeScript** (React) on Vercel - the natural pairing for Vercel hosting - with **Supabase** as the backend-as-a-service: Postgres for the data model, Supabase Auth for case-manager login, Supabase Realtime for live dashboard updates, Supabase Edge Functions for scheduled jobs (reminders, expiry checks) and Zoho webhook receivers. |
+| Case-manager auth | **Email + password**, via Supabase Auth (built-in - no custom auth code needed). |
+| Push notifications | Confirmed in scope as a secondary channel alongside email - see section 6. |
+| E-signature | **Dropped.** Confirmed out of scope - no signed-document flow needed. |
 
 ## 3. Proposed architecture
 
@@ -76,13 +76,13 @@ simplification is treated as the standing decision for this build:
       │
       ▼
  Internal webapp (Next.js on Vercel, installable PWA)
- case managers & compliance team — email + password login
+ case managers & compliance team - email + password login
  (case list, case detail, checklist, tasks, CBK log, reports)
 ```
 
-Client interaction stays entirely inside Zoho WorkDrive. Everything else — checklist
+Client interaction stays entirely inside Zoho WorkDrive. Everything else - checklist
 logic, expiry tracking, reminders, CBK correspondence, fee tracking, and the
-aggregate dashboard — lives in the internal webapp and its Supabase backend.
+aggregate dashboard - lives in the internal webapp and its Supabase backend.
 
 ## 4. Core data model
 
@@ -92,13 +92,13 @@ aggregate dashboard — lives in the internal webapp and its Supabase backend.
 | **Application** | client ref, current stage (1/2/3), sub-status, completion % |
 | **Shareholder / Director** | linked client, KYC & vetting document status |
 | **Document** | type, checklist item ref, owner tag (client/Ilkerin/joint), status (missing/received/verified/expired), expiry date, Zoho WorkDrive file ref |
-| **Checklist template** | stage, item name, owner tag, expiry rule (e.g. "valid 3 months") — versioned, compliance-team editable |
+| **Checklist template** | stage, item name, owner tag, expiry rule (e.g. "valid 3 months") - versioned, compliance-team editable |
 | **Task** | linked item (document/CBK query/etc.), owner (case manager), due date, status |
 | **CBK correspondence** | application ref, query text, received date, response deadline, response status |
 | **Fee payment** | type, amount, status, receipt ref |
 | **Notification log** | recipient, channel (email/push/in-app), template, sent status, timestamp |
 | **User (case manager / compliance / admin)** | role, auth identity |
-| **Audit log** | entity, action, actor, timestamp — append-only, covers every document/status/task/CBK change |
+| **Audit log** | entity, action, actor, timestamp - append-only, covers every document/status/task/CBK change |
 
 ## 5. Automation rules (event-driven)
 
@@ -118,18 +118,18 @@ aggregate dashboard — lives in the internal webapp and its Supabase backend.
 
 ## 6. Non-functional requirements
 
-- **Data protection**: no public client-facing surface — the webapp requires
+- **Data protection**: no public client-facing surface - the webapp requires
   authenticated login for every route (case managers/compliance only). Since
   Vercel gives the app a public URL, access control is enforced by auth, not
   network isolation; an optional extra layer (Vercel deployment protection /
   IP allowlist) can be added if that's not sufficient. Documents stay in Zoho
-  WorkDrive (not re-hosted) — the app stores references/metadata, not copies,
+  WorkDrive (not re-hosted) - the app stores references/metadata, not copies,
   unless a local cache is explicitly required.
 - **Auth**: case managers/compliance authenticate via **Supabase Auth,
   email + password**. Row-level security (RLS) policies in Postgres enforce
   role-based access (case manager vs. compliance vs. admin) at the database
   layer, not just in the frontend.
-- **Notifications**: **email** (primary, guaranteed-delivery channel — internal
+- **Notifications**: **email** (primary, guaranteed-delivery channel - internal
   alerts to case managers, automated emails to clients for missing/overdue
   documents) plus **web push** (secondary, opt-in channel) via a service
   worker + a push provider (e.g. Web Push/VAPID or a managed provider like
@@ -146,20 +146,20 @@ aggregate dashboard — lives in the internal webapp and its Supabase backend.
 ## 7. Open questions / assumptions to confirm before or during Phase 1
 
 1. Exact CBK document checklist per stage (owner tags, expiry rules) needs to be
-   supplied by the compliance team as the first real data import — this plan
+   supplied by the compliance team as the first real data import - this plan
    treats it as an input, not something to invent.
 2. Whether Vercel's built-in deployment protection (password/SSO on preview or
    production URLs) should be layered on top of app-level login for extra
-   data-protection assurance — a cheap add, worth a yes/no from IT.
+   data-protection assurance - a cheap add, worth a yes/no from IT.
 
 ## 8. Risks
 
-- **Zoho WorkDrive API/webhook limitations** (rate limits, webhook reliability) —
+- **Zoho WorkDrive API/webhook limitations** (rate limits, webhook reliability) -
   mitigate with a polling fallback alongside webhooks.
-- **Checklist logic changes** owned by compliance team — must be data-driven
+- **Checklist logic changes** owned by compliance team - must be data-driven
   (versioned templates), not hardcoded, or every regulatory tweak needs a
   developer.
-- **Single point of failure on Zoho** — if WorkDrive is down, ingestion pauses;
+- **Single point of failure on Zoho** - if WorkDrive is down, ingestion pauses;
   document that this is an accepted dependency risk given the "no new client
   logins" requirement.
 

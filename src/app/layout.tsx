@@ -28,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* Blocking (not async/defer) so the theme class is applied before
-            first paint — avoids a flash of the wrong theme on load. */}
+            first paint - avoids a flash of the wrong theme on load. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>

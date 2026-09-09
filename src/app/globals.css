@@ -2,7 +2,7 @@
 
 /* Class-based dark mode (not prefers-color-scheme): the app is only ever
    dark when <html> has the "dark" class, toggled deliberately by
-   ThemeToggle and persisted in localStorage. This is intentional — the
+   ThemeToggle and persisted in localStorage. This is intentional - the
    original attempt at automatic OS-driven dark mode made form inputs
    inherit a near-white foreground color with no matching background,
    rendering typed text invisible. Every dark: variant below is added

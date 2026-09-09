@@ -9,7 +9,7 @@ alter table clients add column workdrive_stage3_folder_id text;
 -- would insert into it (see 0002's comment). In practice, the events that
 -- feed it today (a document being marked "received") happen inside normal
 -- case-manager server actions running under the user's own session, not a
--- background job — so staff need insert access too.
+-- background job - so staff need insert access too.
 create policy "staff can insert notification_log" on notification_log
   for insert with check (is_staff());
 

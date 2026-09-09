@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Case Manager Guide — Ilkerin DCP Portal",
+  title: "Case Manager Guide - Ilkerin DCP Portal",
   description: "A plain-language guide to using the DCP licensing case management app.",
 };
 
@@ -71,7 +71,7 @@ export default function DocumentationPage() {
             </Link>
             <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Case Manager Guide</h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              A plain-language walkthrough of the Ilkerin DCP Portal — no technical background
+              A plain-language walkthrough of the Ilkerin DCP Portal - no technical background
               needed. If you’d rather learn by clicking than reading, use the{" "}
               <strong>Guide me</strong> button inside the app instead (see the last section below).
             </p>
@@ -84,9 +84,9 @@ export default function DocumentationPage() {
               CBK’s process has three stages:
             </p>
             <ul className="list-disc space-y-1 pl-5">
-              <li><strong>Stage 1</strong> — Approval of Name</li>
-              <li><strong>Stage 2</strong> — Application for Licence</li>
-              <li><strong>Stage 3</strong> — Data Submission &amp; Licensing</li>
+              <li><strong>Stage 1</strong> - Approval of Name</li>
+              <li><strong>Stage 2</strong> - Application for Licence</li>
+              <li><strong>Stage 3</strong> - Data Submission &amp; Licensing</li>
             </ul>
             <p>
               Each stage has its own checklist of documents. The app tracks which documents are
@@ -95,7 +95,7 @@ export default function DocumentationPage() {
             </p>
             <p>
               Clients never log into this app. They only ever interact with a Zoho WorkDrive
-              folder you share with them — everything else happens on your side.
+              folder you share with them - everything else happens on your side.
             </p>
           </Section>
 
@@ -111,23 +111,23 @@ export default function DocumentationPage() {
 
           <Section id="whiteboard" title="The case whiteboard">
             <p>
-              After signing in, you land on the <strong>whiteboard</strong> — a live view of every
+              After signing in, you land on the <strong>whiteboard</strong> - a live view of every
               client’s case. There are two ways to look at it:
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                <strong>Board view</strong> — clients are grouped into columns by stage, like sticky
+                <strong>Board view</strong> - clients are grouped into columns by stage, like sticky
                 notes on a board. This is the default.
               </li>
               <li>
-                <strong>List view</strong> — the same clients as rows in a table, useful when you
+                <strong>List view</strong> - the same clients as rows in a table, useful when you
                 want to scan everyone at once.
               </li>
             </ul>
             <p>Switch between them with the toggle near the top of the page.</p>
             <p>
               Each client’s card or row shows a progress bar and small colored badges when
-              something needs attention — an overdue task, a document about to expire, or a CBK
+              something needs attention - an overdue task, a document about to expire, or a CBK
               query waiting on a response. Click a client’s name to open their case.
             </p>
           </Section>
@@ -139,11 +139,11 @@ export default function DocumentationPage() {
               <Step>
                 Choose the stage they’re starting at. Most clients start at Stage 1, but if a
                 client already completed some stages before this app existed, you can start them
-                further along — the checklist for that stage is created automatically either way.
+                further along - the checklist for that stage is created automatically either way.
               </Step>
               <Step>
                 If the client already has a Zoho WorkDrive folder from before, paste its link in
-                the WorkDrive field. If they’re brand new, leave it blank — a folder is created for
+                the WorkDrive field. If they’re brand new, leave it blank - a folder is created for
                 them automatically, along with a link you can send them to upload documents.
               </Step>
               <Step>Click <strong>Add client</strong>. They’ll appear on the whiteboard right away.</Step>
@@ -152,16 +152,16 @@ export default function DocumentationPage() {
 
           <Section id="workdrive" title="The client’s document folder">
             <p>
-              Every client has a WorkDrive folder where they drop their documents — they never
+              Every client has a WorkDrive folder where they drop their documents - they never
               need an account or login for this. On a client’s case page you’ll see:
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                <strong>Open WorkDrive folder</strong> — opens the folder for you to look through
+                <strong>Open WorkDrive folder</strong> - opens the folder for you to look through
                 yourself.
               </li>
               <li>
-                <strong>Client upload link</strong> — the link to copy and send to the client so
+                <strong>Client upload link</strong> - the link to copy and send to the client so
                 they can upload their documents. It only lets them upload, not see anyone else’s
                 files.
               </li>
@@ -174,29 +174,29 @@ export default function DocumentationPage() {
 
           <Section id="checklist" title="The checklist & verifying documents">
             <p>
-              Every case has a checklist for its current stage — each row is a document the client
+              Every case has a checklist for its current stage - each row is a document the client
               or your team needs to provide. Each item shows who owns it (client, Ilkerin, or
               joint), its current status, and an expiry date if it has one (like a CRB report,
               which is only valid for a set number of months).
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                <strong>Mark received</strong> — use this once a document has come in but you
+                <strong>Mark received</strong> - use this once a document has come in but you
                 haven’t reviewed it yet.
               </li>
               <li>
-                <strong>The Verified checkbox</strong> — tick it once you’ve checked a document and
-                it’s good. This is the main action you’ll use most often — it’s quick, and it
+                <strong>The Verified checkbox</strong> - tick it once you’ve checked a document and
+                it’s good. This is the main action you’ll use most often - it’s quick, and it
                 updates instantly.
               </li>
               <li>
-                <strong>Reject</strong> — use this if something came in but isn’t acceptable (wrong
+                <strong>Reject</strong> - use this if something came in but isn’t acceptable (wrong
                 document, expired, etc.).
               </li>
             </ul>
             <p>
               Once every item in the current stage is verified, the case moves to the next stage
-              on its own — you don’t need to do anything extra.
+              on its own - you don’t need to do anything extra.
             </p>
           </Section>
 
@@ -209,7 +209,7 @@ export default function DocumentationPage() {
             </p>
             <ol className="list-decimal space-y-1 pl-5">
               <Step>Pick the matching checklist item from the dropdown next to the file.</Step>
-              <Step>Click <strong>Match</strong> — the checklist item flips to “received” automatically.</Step>
+              <Step>Click <strong>Match</strong> - the checklist item flips to “received” automatically.</Step>
               <Step>
                 If a file doesn’t belong to any checklist item (a duplicate, or sent by mistake),
                 click <strong>Ignore</strong> instead.
@@ -223,25 +223,25 @@ export default function DocumentationPage() {
 
           <Section id="stages" title="Stages, and moving back a stage">
             <p>
-              Stages advance automatically — once every checklist item for the current stage is
+              Stages advance automatically - once every checklist item for the current stage is
               verified, the case moves forward and the next stage’s checklist appears.
             </p>
             <p>
               If something needs to be redone (say CBK bounces the application back, or an item
               was verified by mistake), use <strong>← Back to Stage X</strong> on the case page.
               This sends the case back a stage and resets that stage’s checklist so it can be
-              properly re-verified — it doesn’t delete anything, it just asks for a fresh check.
+              properly re-verified - it doesn’t delete anything, it just asks for a fresh check.
             </p>
           </Section>
 
           <Section id="tasks" title="Tasks">
             <p>
               Use the Tasks section on a case page for anything you need to follow up on that
-              isn’t a document — a phone call, an internal reminder, anything with a due date.
+              isn’t a document - a phone call, an internal reminder, anything with a due date.
             </p>
             <ol className="list-decimal space-y-1 pl-5">
               <Step>Type the task, optionally pick a due date, and click <strong>Add</strong>.</Step>
-              <Step>Tick it off once it’s done — it stays visible with a line through it.</Step>
+              <Step>Tick it off once it’s done - it stays visible with a line through it.</Step>
             </ol>
           </Section>
 
@@ -267,7 +267,7 @@ export default function DocumentationPage() {
             <p>
               Click <strong>Visualize progress</strong> on a client’s card or case page for a
               quick-glance view: three rings (one per stage) showing how much of each is done, an
-              overall percentage, and a list of what’s still outstanding — remaining checklist
+              overall percentage, and a list of what’s still outstanding - remaining checklist
               items and open tasks, all in one place.
             </p>
           </Section>
@@ -275,8 +275,8 @@ export default function DocumentationPage() {
           <Section id="completing" title="Completing a case">
             <p>
               Once a client reaches Stage 3 and their licence is actually issued by CBK, open their
-              case and click <strong>Licence received — Complete case</strong>. This is a
-              deliberate action you take yourself — the app won’t do it automatically, since it’s a
+              case and click <strong>Licence received - Complete case</strong>. This is a
+              deliberate action you take yourself - the app won’t do it automatically, since it’s a
               real-world event only you know has happened.
             </p>
             <p>
@@ -294,7 +294,7 @@ export default function DocumentationPage() {
             <p>
               To remove a client entirely, scroll to the red <strong>Danger zone</strong> at the
               bottom of their case page and click <strong>Delete client</strong>. This permanently
-              removes the client and everything tied to their case — there’s no undo, so as a
+              removes the client and everything tied to their case - there’s no undo, so as a
               safeguard you’ll need to type the exact phrase shown (e.g.{" "}
               <code className="rounded bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 text-xs">delete Acme Ltd</code>)
               before the delete button will work.
@@ -306,7 +306,7 @@ export default function DocumentationPage() {
               If you’d rather be shown around than read about it, click the{" "}
               <strong>✨ Guide me</strong> button on the whiteboard, or{" "}
               <strong>✨ Guide me through this case</strong> on a case page. It highlights each
-              part of the screen one at a time with a short explanation — use <strong>Next</strong>{" "}
+              part of the screen one at a time with a short explanation - use <strong>Next</strong>{" "}
               / <strong>Back</strong> to move through it, or <strong>Skip tour</strong> to close it
               anytime.
             </p>
@@ -315,7 +315,7 @@ export default function DocumentationPage() {
           <Section id="help" title="Getting help">
             <p>
               If something in the app looks wrong, or you’re stuck, reach out to whoever manages
-              this system for Ilkerin Consulting rather than trying to fix data yourself —
+              this system for Ilkerin Consulting rather than trying to fix data yourself -
               especially anything involving deleting a client or a document, since those can’t be
               undone from within the app.
             </p>

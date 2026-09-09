@@ -23,15 +23,15 @@ export type ApplicationBoardRow = {
 };
 
 const STAGE_LABEL: Record<string, string> = {
-  stage_1: "Stage 1 — Approval of Name",
-  stage_2: "Stage 2 — Application for Licence",
-  stage_3: "Stage 3 — Data Submission & Licensing",
+  stage_1: "Stage 1 - Approval of Name",
+  stage_2: "Stage 2 - Application for Licence",
+  stage_3: "Stage 3 - Data Submission & Licensing",
 };
 
 const BOARD_COLUMNS = [
-  { key: "stage_1", label: "Stage 1 — Approval of Name" },
-  { key: "stage_2", label: "Stage 2 — Application for Licence" },
-  { key: "stage_3", label: "Stage 3 — Data Submission & Licensing" },
+  { key: "stage_1", label: "Stage 1 - Approval of Name" },
+  { key: "stage_2", label: "Stage 2 - Application for Licence" },
+  { key: "stage_3", label: "Stage 3 - Data Submission & Licensing" },
   { key: "complete", label: "Complete" },
 ] as const;
 
