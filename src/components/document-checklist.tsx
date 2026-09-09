@@ -12,6 +12,10 @@ export type ChecklistDocument = {
   expiry_date: string | null;
   item_name: string;
   checklistTemplateId: string;
+  category: string | null;
+  subcategory: string | null;
+  docType: string | null;
+  form: string | null;
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -21,6 +25,31 @@ const STATUS_STYLE: Record<string, string> = {
   expired: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
   rejected: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
 };
+
+type DocGroup = {
+  key: string;
+  category: string | null;
+  subcategory: string | null;
+  items: ChecklistDocument[];
+};
+
+// Docs arrive pre-sorted by sort_order, which already nests category ->
+// subcategory -> item contiguously (see migration 0018), so a single pass
+// grouping adjacent same-category/subcategory runs is enough — no re-sort
+// needed here.
+function groupDocuments(docs: ChecklistDocument[]): DocGroup[] {
+  const groups: DocGroup[] = [];
+  for (const doc of docs) {
+    const key = `${doc.category ?? ""}::${doc.subcategory ?? ""}`;
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.items.push(doc);
+    } else {
+      groups.push({ key, category: doc.category, subcategory: doc.subcategory, items: [doc] });
+    }
+  }
+  return groups;
+}
 
 export function DocumentChecklist({
   applicationId,
@@ -52,6 +81,13 @@ export function DocumentChecklist({
 
   function moveDoc(sourceId: string, targetId: string) {
     if (sourceId === targetId) return;
+
+    const source = localDocs.find((d) => d.id === sourceId);
+    const target = localDocs.find((d) => d.id === targetId);
+    if (!source || !target) return;
+    // Dragging is only meaningful within the same category/subcategory
+    // section now that items are visually grouped — ignore cross-group drops.
+    if (source.category !== target.category || source.subcategory !== target.subcategory) return;
 
     const previousOrder = localDocs;
     const next = [...localDocs];
@@ -100,13 +136,108 @@ export function DocumentChecklist({
     });
   }
 
-  return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
-      {reorderError && (
-        <p className="animate-fade-in border-b border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 px-4 py-2 text-xs text-red-600 dark:text-red-400">
-          Couldn&apos;t save the new order: {reorderError}
-        </p>
-      )}
+  function renderRow(doc: ChecklistDocument) {
+    return (
+      <tr
+        key={doc.id}
+        onDragOver={(e) => {
+          if (locked) return;
+          e.preventDefault();
+        }}
+        onDrop={(e) => {
+          if (locked || !dragId) return;
+          e.preventDefault();
+          moveDoc(dragId, doc.id);
+          setDragId(null);
+        }}
+        className={`transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50 ${dragId === doc.id ? "opacity-50" : ""}`}
+      >
+        <td className="px-2 py-3 text-center">
+          {!locked && (
+            <span
+              draggable
+              onDragStart={() => setDragId(doc.id)}
+              onDragEnd={() => setDragId(null)}
+              role="button"
+              aria-label={`Drag to reorder ${doc.item_name}`}
+              title="Drag to reorder"
+              className="inline-block cursor-grab select-none text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 active:cursor-grabbing"
+            >
+              ⠿
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">
+          {doc.item_name}
+          {(doc.form || doc.docType) && (
+            <div className="mt-0.5 flex flex-wrap gap-1">
+              {doc.form && (
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                  {doc.form}
+                </span>
+              )}
+              {doc.docType && (
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                  {doc.docType}
+                </span>
+              )}
+            </div>
+          )}
+        </td>
+        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 capitalize">{doc.owner_tag}</td>
+        <td className="px-4 py-3">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize transition-colors ${STATUS_STYLE[doc.status] ?? "bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"}`}
+          >
+            {doc.status}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "—"}</td>
+        <td className="px-4 py-3">
+          <input
+            type="checkbox"
+            checked={doc.status === "verified"}
+            disabled={locked}
+            onChange={() => setStatus(doc.id, doc.status === "verified" ? "received" : "verified")}
+            className="h-4 w-4 accent-brand disabled:opacity-50"
+            aria-label={`Mark ${doc.item_name} as verified`}
+          />
+        </td>
+        <td className="px-4 py-3">
+          {locked ? (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">Locked</span>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
+                {doc.status !== "received" && doc.status !== "verified" && (
+                  <button
+                    onClick={() => setStatus(doc.id, "received")}
+                    className="text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand"
+                  >
+                    Mark received
+                  </button>
+                )}
+                {doc.status !== "rejected" && (
+                  <button
+                    onClick={() => setStatus(doc.id, "rejected")}
+                    className="text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:text-red-800 dark:hover:text-red-400"
+                  >
+                    Reject
+                  </button>
+                )}
+              </div>
+              {errors[doc.id] && (
+                <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{errors[doc.id]}</span>
+              )}
+            </div>
+          )}
+        </td>
+      </tr>
+    );
+  }
+
+  function renderTable(items: ChecklistDocument[]) {
+    return (
       <table className="w-full text-left text-sm">
         <thead className="bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
           <tr>
@@ -119,99 +250,51 @@ export function DocumentChecklist({
             <th className="px-4 py-2 font-medium">Action</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
-          {localDocs.map((doc) => (
-            <tr
-              key={doc.id}
-              onDragOver={(e) => {
-                if (locked) return;
-                e.preventDefault();
-              }}
-              onDrop={(e) => {
-                if (locked || !dragId) return;
-                e.preventDefault();
-                moveDoc(dragId, doc.id);
-                setDragId(null);
-              }}
-              className={`transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700/50 ${dragId === doc.id ? "opacity-50" : ""}`}
-            >
-              <td className="px-2 py-3 text-center">
-                {!locked && (
-                  <span
-                    draggable
-                    onDragStart={() => setDragId(doc.id)}
-                    onDragEnd={() => setDragId(null)}
-                    role="button"
-                    aria-label={`Drag to reorder ${doc.item_name}`}
-                    title="Drag to reorder"
-                    className="inline-block cursor-grab select-none text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 active:cursor-grabbing"
-                  >
-                    ⠿
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">{doc.item_name}</td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 capitalize">{doc.owner_tag}</td>
-              <td className="px-4 py-3">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize transition-colors ${STATUS_STYLE[doc.status] ?? "bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"}`}
-                >
-                  {doc.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "—"}</td>
-              <td className="px-4 py-3">
-                <input
-                  type="checkbox"
-                  checked={doc.status === "verified"}
-                  disabled={locked}
-                  onChange={() =>
-                    setStatus(doc.id, doc.status === "verified" ? "received" : "verified")
-                  }
-                  className="h-4 w-4 accent-brand disabled:opacity-50"
-                  aria-label={`Mark ${doc.item_name} as verified`}
-                />
-              </td>
-              <td className="px-4 py-3">
-                {locked ? (
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">Locked</span>
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex gap-2">
-                      {doc.status !== "received" && doc.status !== "verified" && (
-                        <button
-                          onClick={() => setStatus(doc.id, "received")}
-                          className="text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand"
-                        >
-                          Mark received
-                        </button>
-                      )}
-                      {doc.status !== "rejected" && (
-                        <button
-                          onClick={() => setStatus(doc.id, "rejected")}
-                          className="text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:text-red-800 dark:hover:text-red-400"
-                        >
-                          Reject
-                        </button>
-                      )}
-                    </div>
-                    {errors[doc.id] && (
-                      <span className="animate-fade-in text-xs text-red-600 dark:text-red-400">{errors[doc.id]}</span>
-                    )}
-                  </div>
-                )}
-              </td>
-            </tr>
-          ))}
-          {localDocs.length === 0 && (
-            <tr>
-              <td colSpan={7} className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                No checklist items for this application.
-              </td>
-            </tr>
-          )}
-        </tbody>
+        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">{items.map(renderRow)}</tbody>
       </table>
+    );
+  }
+
+  if (localDocs.length === 0) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        No checklist items for this application.
+      </div>
+    );
+  }
+
+  const groups = groupDocuments(localDocs);
+  const ungrouped = groups.length === 1 && groups[0].category === null;
+
+  return (
+    <div className="space-y-3">
+      {reorderError && (
+        <p className="animate-fade-in rounded-md border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 px-4 py-2 text-xs text-red-600 dark:text-red-400">
+          Couldn&apos;t save the new order: {reorderError}
+        </p>
+      )}
+
+      {ungrouped ? (
+        <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+          {renderTable(groups[0].items)}
+        </div>
+      ) : (
+        groups.map((group) => (
+          <details
+            key={group.key}
+            open
+            className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+          >
+            <summary className="cursor-pointer select-none bg-zinc-50 dark:bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              {group.category}
+              {group.subcategory && (
+                <span className="ml-1 font-normal text-zinc-500 dark:text-zinc-400">— {group.subcategory}</span>
+              )}
+            </summary>
+            {renderTable(group.items)}
+          </details>
+        ))
+      )}
     </div>
   );
 }

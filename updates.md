@@ -5,6 +5,32 @@ implementation complexity. Ordering is grounded in the current schema/code,
 not just gut feel — each item notes what already exists to build on and
 what's genuinely new. Complexity tiers: 🟢 Light · 🟡 Medium · 🟠 Heavy · 🔴 Heaviest.
 
+- [x] **0. Real Stage 2 checklist (real CBK document requirements)** 🟡 Medium — **built this session**
+      Replaces the 6 placeholder Stage 2 items (`0003`, explicitly marked as
+      a stand-in) with the real, 43-item CBK-mandated checklist supplied as
+      an Excel workbook. `category` = the workbook's tab name (3 tabs);
+      `subcategory` (first tab only) verified against the file's **raw XML**,
+      not guessed — column B of 3 specific rows carries a literal red
+      (`FFFF0000`) cell fill, which turned out to be exactly the three
+      existing section-header rows ("DCP Application Forms" / "Supporting
+      Documents" / "Statutory Declaration"); no red cells exist in the other
+      two tabs. Per explicit scope decision, only the sheet's Document
+      Name/Form/Category columns were imported (Doc Code, Applies To,
+      Required Format, Multiplicity, and Mandatory/Conditional are not
+      modeled) — deliberately **not** the "per-person" scope (no
+      director/shareholder/officer auto-generation; `shareholders_directors`
+      stays unused, confirmed nothing partial exists anywhere in `src/`).
+      `document-checklist.tsx` now groups items by category/subcategory as
+      collapsible `<details>` sections instead of one flat table (falls back
+      to the old flat view when category is null, so Stage 1/3's untouched
+      placeholder checklists render exactly as before); drag-to-reorder now
+      only allows drops within the same section. New migration `0018`,
+      applied to Supabase and confirmed live — 43 active Stage 2 rows with
+      the correct category/subcategory/doc_type/form values.
+      Type-check and production build both pass; the real UI itself is
+      still unverified in a browser — no case-manager credentials on hand
+      this session.
+
 - [x] **1. CBK correspondence attachments** 🟡 Medium (revised up from 🟢) — **built this session**
       Correction to the original estimate: there was no existing "Zoho
       upload wiring" to reuse — every prior Zoho file reference came from

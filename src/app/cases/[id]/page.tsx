@@ -78,7 +78,7 @@ export default async function CaseDetailPage({
   const { data: documentsRaw } = await supabase
     .from("documents")
     .select(
-      "id, status, owner_tag, expiry_date, checklist_template:checklist_templates(id, item_name, stage, sort_order)",
+      "id, status, owner_tag, expiry_date, checklist_template:checklist_templates(id, item_name, stage, sort_order, category, subcategory, doc_type, form)",
     )
     .eq("application_id", id);
 
@@ -96,17 +96,25 @@ export default async function CaseDetailPage({
       stage: template?.stage,
       checklistTemplateId: template?.id ?? doc.id,
       sortOrder: template?.sort_order ?? 0,
+      category: template?.category ?? null,
+      subcategory: template?.subcategory ?? null,
+      docType: template?.doc_type ?? null,
+      form: template?.form ?? null,
     };
   });
 
   const currentStageDocuments: ChecklistDocument[] = normalizedDocuments
     .filter((doc) => doc.stage === application.stage)
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId }) => ({
+    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId, category, subcategory, docType, form }) => ({
       id,
       status,
       owner_tag,
       expiry_date,
+      category,
+      subcategory,
+      docType,
+      form,
       item_name,
       checklistTemplateId,
     }));
@@ -143,7 +151,7 @@ export default async function CaseDetailPage({
   const { data: cbkCorrespondence } = await supabase
     .from("cbk_correspondence")
     .select(
-      "id, query_text, received_date, response_deadline, response_status, response_text, query_zoho_file_url, query_zoho_file_name, response_zoho_file_url, response_zoho_file_name",
+      "id, query_text, received_date, response_deadline, response_status, response_text, query_zoho_file_id, query_zoho_file_name, response_zoho_file_id, response_zoho_file_name",
     )
     .eq("application_id", id)
     .order("received_date", { ascending: false });
