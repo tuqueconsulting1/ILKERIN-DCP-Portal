@@ -98,16 +98,35 @@ what's genuinely new. Complexity tiers: 🟢 Light · 🟡 Medium · 🟠 Heavy 
       access (see #2), so this is mostly new-table-plus-UI, not a security
       change.
 
-- [ ] **5. Manual stage progression override** 🟡 Medium
-      Today stage advance is **auto-only** - it fires when every required
-      checklist item is verified (`actions/cases.ts`); there is no manual
-      "Next" path in the code at all. Needs a new server action that
-      force-advances regardless of completion, plus a visual "N items
-      still outstanding" backlog indicator carried onto the new stage.
-      Flagged 🟡 rather than 🟢 because stage-advance/completion-% is the
-      most bug-prone area in the codebase so far (three fix migrations:
-      `0008`, `0009`, `0010`) - treat any change here as needing the same
-      care as those did.
+- [x] **5. Manual stage progression override** 🟡 Medium - **built this
+      session**
+      New `forceAdvanceStage` server action (`src/app/actions/cases.ts`)
+      force-advances an active application's stage regardless of
+      completion. Deliberately mirrors the exact idempotent
+      seed-then-recalculate shape the auto-advance trigger uses
+      (`0008`/`0009`/`0010`) rather than a shortcut: update `stage`, insert
+      any missing next-stage checklist rows only where a document doesn't
+      already exist for that template (handles a prior back-then-forward
+      cycle without duplicating rows), then explicitly recompute
+      `completion_pct` for the new stage - needed because, same as `0010`,
+      the documents-insert trigger only fires a recalculation when rows are
+      actually inserted, and a re-advance into a stage that already has all
+      its document rows would otherwise leave `completion_pct` stuck.
+      No schema change and no new RPC - reuses the same
+      staff-can-write-applications/documents RLS policies the existing
+      `moveToPreviousStage` action already relies on.
+      Outstanding items in the stage being skipped are **not** deleted or
+      reset - they stay as `documents` rows against their original stage,
+      so the case detail page's existing "Previous stages" panel already
+      surfaces them; that panel now also gets an amber "N outstanding"
+      badge per stage that isn't fully verified
+      (`src/app/cases/[id]/page.tsx`). New `ForceAdvanceStageButton`
+      (`src/components/force-advance-stage-button.tsx`, same pattern as
+      `BackStageButton`/`CompleteCaseButton`) shown next to the existing
+      stage-navigation buttons, with a confirm dialog stating how many
+      items are still unverified before advancing. Type-check/build pass;
+      **not yet verified live** - no case-manager credentials on hand this
+      session.
 
 - [x] **5b. Checklist drag-to-reorder** 🟡 Medium - **built this session**
       Drag handle (⠿) added to each row in `document-checklist.tsx`; order
@@ -155,19 +174,32 @@ what's genuinely new. Complexity tiers: 🟢 Light · 🟡 Medium · 🟠 Heavy 
       the admin UI without the `dcp_type` dimension in mind means redoing
       it once #7 lands.
 
-- [~] **7b. Login with Zoho** 🟠 Heavy - **code scaffolded this session,
-      blocked on external setup**
+- [~] **7b. Login with Zoho** 🟠 Heavy - **code scaffolded, blocked on
+      external setup**
       Requested separately, not from the original list. Zoho does expose a
       real OIDC discovery document and `id_token`
       (`https://accounts.zoho.com/.well-known/openid-configuration`), so
       this uses Supabase's **custom OIDC provider** support rather than a
-      hand-rolled OAuth flow. Domain restricted to `@iacentre.co.ke` per
-      your answer - anyone else's Zoho sign-in is rejected before a
-      profile is created (`0015_restrict_zoho_signin_domain.sql`, checked
-      via `raw_app_meta_data->>'provider'` so it doesn't affect
-      dashboard-created email accounts like `admin@iacentre.co.ke`).
+      hand-rolled OAuth flow. First pass restricted sign-in to the
+      `@iacentre.co.ke` domain (`0015_restrict_zoho_signin_domain.sql`),
+      but that was **superseded the same session** by a per-email
+      allowlist instead of a fixed domain rule
+      (`0016_super_admin_and_zoho_allowlist.sql`): a new
+      `zoho_allowed_emails` table plus a `profiles.is_super_admin` flag,
+      orthogonal to the existing `role` column (which governs DCP-workflow
+      permissions, not system-level access config). A super admin manages
+      that allowlist from a new, separate **`/superadmin`** login +
+      dashboard (`src/app/superadmin/page.tsx`,
+      `src/components/superadmin-login-form.tsx`,
+      `src/components/superadmin-dashboard.tsx`,
+      `src/app/actions/superadmin.ts`) - not the regular case-manager
+      `/login` flow. `admin@iacentre.co.ke` was seeded as the first super
+      admin. The signup trigger (`handle_new_user`) now rejects any Zoho
+      sign-in whose email isn't on the allowlist, checked via
+      `raw_app_meta_data->>'provider'` so it doesn't affect
+      dashboard-created email accounts.
       Code done: `src/app/auth/callback/route.ts` (exchanges the OAuth
-      code for a session), `/login`'s new "Sign in with Zoho" button, and
+      code for a session), `/login`'s "Sign in with Zoho" button, and
       `/auth/callback` added to the middleware's public paths. **Cannot be
       finished from code alone** - two external steps only someone with
       the actual accounts can do: (1) register a new Zoho OAuth client

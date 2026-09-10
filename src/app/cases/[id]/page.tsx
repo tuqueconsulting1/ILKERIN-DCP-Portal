@@ -7,6 +7,7 @@ import { CopyLink } from "@/components/copy-link";
 import { PendingUploads } from "@/components/pending-uploads";
 import { CompleteCaseButton } from "@/components/complete-case-button";
 import { BackStageButton } from "@/components/back-stage-button";
+import { ForceAdvanceStageButton } from "@/components/force-advance-stage-button";
 import { ClientNameEditor } from "@/components/client-name-editor";
 import { DeleteClientDialog } from "@/components/delete-client-dialog";
 import { TaskList } from "@/components/task-list";
@@ -22,6 +23,11 @@ const STAGE_LABEL: Record<string, string> = {
 const PREVIOUS_STAGE: Record<string, string | undefined> = {
   stage_2: "stage_1",
   stage_3: "stage_2",
+};
+
+const NEXT_STAGE: Record<string, string | undefined> = {
+  stage_1: "stage_2",
+  stage_2: "stage_3",
 };
 
 const CASE_TOUR: TourStep[] = [
@@ -191,6 +197,13 @@ export default async function CaseDetailPage({
               {!locked && PREVIOUS_STAGE[application.stage] && (
                 <BackStageButton applicationId={id} previousStage={PREVIOUS_STAGE[application.stage]!} />
               )}
+              {!locked && NEXT_STAGE[application.stage] && (
+                <ForceAdvanceStageButton
+                  applicationId={id}
+                  nextStage={NEXT_STAGE[application.stage]!}
+                  outstandingCount={currentStageDocuments.filter((doc) => doc.status !== "verified").length}
+                />
+              )}
               {!locked && application.stage === "stage_3" && <CompleteCaseButton applicationId={id} />}
             </div>
           </div>
@@ -225,14 +238,24 @@ export default async function CaseDetailPage({
             <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Previous stages</h2>
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4">
               <ul className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                {previousStages.map((s) => (
-                  <li key={s.stage} className="flex justify-between">
-                    <span>{STAGE_LABEL[s.stage] ?? s.stage}</span>
-                    <span>
-                      {s.verified}/{s.total} verified
-                    </span>
-                  </li>
-                ))}
+                {previousStages.map((s) => {
+                  const outstanding = s.total - s.verified;
+                  return (
+                    <li key={s.stage} className="flex items-center justify-between">
+                      <span>{STAGE_LABEL[s.stage] ?? s.stage}</span>
+                      <span className="flex items-center gap-2">
+                        <span>
+                          {s.verified}/{s.total} verified
+                        </span>
+                        {outstanding > 0 && (
+                          <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-400">
+                            {outstanding} outstanding
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </section>

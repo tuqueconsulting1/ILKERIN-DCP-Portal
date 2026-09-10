@@ -27,7 +27,8 @@ unblocked.
       Webhooks API using this same token if we go that route in Phase 2)
 - [ ] Get the compliance team's authoritative Stage 1/2/3 document checklist
       (item name, owner tag, expiry rule if any) - this becomes the first real
-      data import, not a placeholder
+      data import, not a placeholder. **Stage 2 done** (see Phase 1 below);
+      Stage 1 and Stage 3 still run on placeholder seed data
 - [ ] Standardize Zoho WorkDrive client folder template structure so it maps
       1:1 to the Stage 1/2/3 checklist
 - [ ] Decide whether to layer Vercel deployment protection on top of app-level
@@ -61,6 +62,18 @@ unblocked.
       (`supabase/migrations/0003_seed_checklist_placeholder.sql`, 11 rows
       confirmed live) - **must be replaced with the real compliance-team
       checklist before the pilot**
+- [x] **Stage 2 placeholder replaced with the real CBK-mandated checklist**:
+      the 6 placeholder Stage 2 items swapped for the real 43-item document
+      list supplied as an Excel workbook (`0018_...sql`), grouped into
+      `category`/`subcategory` (verified against the workbook's raw XML cell
+      formatting, not guessed). Only Document Name/Form/Category were
+      imported - Doc Code, Applies To, Required Format, Multiplicity, and
+      Mandatory/Conditional are not modeled, and this is not the "per-person"
+      scope (no director/shareholder auto-generation). `document-checklist.tsx`
+      now groups items into collapsible sections when `category` is set,
+      falling back to the old flat view for Stage 1/3's still-placeholder
+      checklists. Type-check/build pass; **not yet verified in a live
+      browser** (see `updates.md` item 0)
 - [x] First case-manager user created (Supabase Auth + matching `profiles`
       row, role `admin`) - credentials shared with user directly, not stored
       in this repo
@@ -217,6 +230,23 @@ unblocked.
       query auto-creates a linked task with the response deadline as its due
       date (per PLAN.md's automation rule); marking responded closes that
       task automatically
+- [x] **CBK correspondence file attachments**: query and response can each
+      carry their own document, uploaded straight into the client's root
+      WorkDrive folder via a new `uploadFileToWorkdrive()` (`src/lib/zoho.ts`)
+      - six new `query_zoho_file_*`/`response_zoho_file_*` columns
+      (`0017_cbk_correspondence_attachments.sql`). "Mark responded" moved
+      from a `window.prompt()` to an inline form so it can collect a file.
+      Hardened with a hard 8MB cap shared client/server-side
+      (`src/lib/attachments.ts`, `actions/cbk.ts`) and a raised
+      `serverActions.bodySizeLimit` in `next.config.ts` (Next's 1MB default
+      would otherwise reject anything over 1MB before the app's own check
+      ran). Viewing was also fixed: Zoho's stored `Permalink` only opens for
+      Zoho-org members, which case managers aren't (they authenticate via
+      Supabase) - fixed via `downloadWorkdriveFile()` plus a
+      `/api/attachments/[fileId]` route that proxies the file through the
+      app's own Zoho service account after checking the viewer has a valid
+      app session. Type-check/build pass; **not yet verified live** - `0017`
+      hadn't been applied to Supabase as of this writing
 - [x] Full live test passed: stage_1 fully verified → auto-advanced to
       stage_2 with correctly reset/scoped progress → stage_2 verified →
       auto-advanced to stage_3 → stage_3 fully verified but stayed **active**
@@ -441,6 +471,38 @@ unblocked.
       `page.tsx`'s new dot-grid block) but not itself screenshotted this
       round - a working case-manager login wasn't available in this
       session to drive a real browser session past `/login`.
+
+- [x] **Checklist drag-to-reorder**: a drag handle (⠿) on each checklist row
+      (`document-checklist.tsx`), order persisted to a new
+      `checklist_templates.sort_order` column
+      (`0014_checklist_template_sort_order.sql`,
+      `actions/checklist-templates.ts`). Reordering edits the shared
+      template row, so the new order applies to every application at that
+      stage, not just the one dragged in - consistent with
+      `checklist_templates` writes already being compliance/admin-only via
+      RLS. Also fixed a login/sign-out redirect race (`router.replace()` +
+      `router.refresh()` back-to-back could let refresh interrupt the
+      in-flight transition) by switching both to a full `window.location`
+      navigation, and added a password show/hide toggle on `/login`.
+      Type-check/build pass; **not yet verified live** - `0014` hadn't been
+      applied to Supabase as of this writing
+- [~] **Login with Zoho + super admin**: `/login` gained a "Sign in with
+      Zoho" option using Supabase's custom OIDC provider support
+      (`src/app/auth/callback/route.ts` exchanges the OAuth code for a
+      session). Gated by a new per-email allowlist
+      (`zoho_allowed_emails` table) rather than a fixed domain rule,
+      managed from a new, separate `/superadmin` login + dashboard
+      (`profiles.is_super_admin` - orthogonal to the existing `role` column,
+      which governs DCP-workflow permissions, not system access) -
+      `0015_restrict_zoho_signin_domain.sql` then
+      `0016_super_admin_and_zoho_allowlist.sql` (supersedes 0015's hardcoded
+      domain check), `admin@iacentre.co.ke` seeded as the first super admin.
+      **Blocked on external setup, not code**: needs (1) a Zoho OAuth client
+      registered for user sign-in (`openid email profile` scopes) in the
+      Zoho API Console - distinct from the existing server-to-server
+      WorkDrive `ZOHO_CLIENT_ID`/`SECRET` - and (2) that client added as a
+      custom OIDC provider named exactly `custom:zoho` in the Supabase
+      dashboard. Untestable end-to-end until both are done
 
 ## Phase 4 - Reminders, CBK tracker, fees, push notifications
 
