@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Case Manager Guide - Financial Services Sector Licences Portal",
-  description: "A plain-language guide to using the DCP licensing case management app.",
+  description: "A plain-language guide to using the NDTCP licensing case management app.",
 };
 
 const SECTIONS = [
@@ -80,7 +80,7 @@ export default function DocumentationPage() {
           <Section id="overview" title="What this app does">
             <p>
               This app is where you track every client’s journey through the Central Bank of
-              Kenya (CBK) Digital Credit Provider (DCP) licensing process, from start to finish.
+              Kenya (CBK) Non-Deposit Taking Credit Provider (NDTCP) licensing process, from start to finish.
               CBK’s process has three stages:
             </p>
             <ul className="list-disc space-y-1 pl-5">
