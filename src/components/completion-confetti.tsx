@@ -23,7 +23,7 @@ export function CompletionConfetti() {
       });
     });
 
-    router.replace("/");
+    router.replace("/ndtcp");
 
     return () => {
       cancelled = true;

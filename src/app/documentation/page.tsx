@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Case Manager Guide - Ilkerin DCP Portal",
+  title: "Case Manager Guide - Financial Services Sector Licences Portal",
   description: "A plain-language guide to using the DCP licensing case management app.",
 };
 
@@ -71,7 +71,7 @@ export default function DocumentationPage() {
             </Link>
             <h1 className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Case Manager Guide</h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              A plain-language walkthrough of the Ilkerin DCP Portal - no technical background
+              A plain-language walkthrough of the Financial Services Sector Licences Portal - no technical background
               needed. If you’d rather learn by clicking than reading, use the{" "}
               <strong>Guide me</strong> button inside the app instead (see the last section below).
             </p>

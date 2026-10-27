@@ -39,7 +39,7 @@ export function SuperAdminLoginForm() {
       >
         <div>
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Super admin</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Ilkerin DCP Portal system access</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Financial Services Sector Licences Portal system access</p>
         </div>
 
         <div className="space-y-1">

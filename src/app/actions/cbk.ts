@@ -111,7 +111,7 @@ export async function logCbkQuery(applicationId: string, formData: FormData) {
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -161,6 +161,6 @@ export async function markCbkResponded(
     .eq("linked_entity_id", correspondenceId);
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }

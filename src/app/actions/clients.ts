@@ -139,7 +139,7 @@ export async function addClient(
     }
   }
 
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true, warning };
 }
 
@@ -167,7 +167,7 @@ export async function updateWorkdriveFolderUrl(
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -201,7 +201,7 @@ export async function updateClientName(
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -221,6 +221,6 @@ export async function deleteClient(clientId: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }

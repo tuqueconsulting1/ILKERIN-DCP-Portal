@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ilkerin DCP Portal",
-  description: "Internal case management tool for CBK DCP licensing workflows",
+  title: "Financial Services Sector Licences Portal",
+  description: "Internal case management tool for financial services sector licensing workflows",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

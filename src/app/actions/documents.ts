@@ -41,6 +41,6 @@ export async function updateDocumentStatus(
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }

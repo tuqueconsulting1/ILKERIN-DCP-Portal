@@ -54,7 +54,7 @@ export async function matchPendingUpload(
   await logDocumentReceivedNotification(supabase, documentId, applicationId);
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 

@@ -21,7 +21,7 @@ export async function AppHeader() {
           priority
           className="h-8 w-auto"
         />
-        <span className="hidden text-sm font-normal text-white/70 sm:inline">DCP Portal</span>
+        <span className="hidden text-sm font-normal text-white/70 sm:inline">Financial Services Sector Licences Portal</span>
       </Link>
       <div className="flex items-center gap-4">
         {user && <NotificationBell />}

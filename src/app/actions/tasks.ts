@@ -32,7 +32,7 @@ export async function addTask(applicationId: string, formData: FormData) {
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -53,6 +53,6 @@ export async function setTaskStatus(taskId: string, applicationId: string, statu
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }

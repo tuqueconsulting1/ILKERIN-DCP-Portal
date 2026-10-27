@@ -167,7 +167,7 @@ export default async function CaseDetailPage({
       <div className="animate-fade-in mx-auto max-w-4xl space-y-6">
         <div>
           <div className="flex items-baseline justify-between">
-            <Link href="/" className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
+            <Link href="/ndtcp" className="text-sm text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand">
               ← Back to whiteboard
             </Link>
             <GuideMeButton steps={CASE_TOUR} label="Guide me through this case" />

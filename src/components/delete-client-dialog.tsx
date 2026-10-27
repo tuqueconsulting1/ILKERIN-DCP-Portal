@@ -30,7 +30,7 @@ export function DeleteClientDialog({
         setError(result.error);
         return;
       }
-      router.push("/");
+      router.push("/ndtcp");
     });
   }
 

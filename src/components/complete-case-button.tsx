@@ -22,7 +22,7 @@ export function CompleteCaseButton({ applicationId }: { applicationId: string })
         return;
       }
       // Navigate back to the dashboard so the completion confetti plays there.
-      router.push("/?completed=1");
+      router.push("/ndtcp?completed=1");
     });
   }
 

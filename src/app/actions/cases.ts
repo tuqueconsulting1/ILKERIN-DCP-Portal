@@ -37,7 +37,7 @@ export async function completeCase(applicationId: string) {
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -168,7 +168,7 @@ export async function forceAdvanceStage(applicationId: string) {
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 
@@ -238,6 +238,6 @@ export async function moveToPreviousStage(applicationId: string) {
   }
 
   revalidatePath(`/cases/${applicationId}`);
-  revalidatePath("/");
+  revalidatePath("/ndtcp");
   return { success: true };
 }
