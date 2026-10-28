@@ -13,6 +13,11 @@ import { DeleteClientDialog } from "@/components/delete-client-dialog";
 import { TaskList } from "@/components/task-list";
 import { CbkLog } from "@/components/cbk-log";
 import { GuideMeButton, type TourStep } from "@/components/guided-tour";
+import { isVerificationEnabled } from "@/lib/verification";
+
+// "Check now" runs automated document reviews in a server action on this
+// page, and a batch of model calls can take a few minutes.
+export const maxDuration = 300;
 
 const STAGE_LABEL: Record<string, string> = {
   stage_1: "Stage 1 - Approval of Name",
@@ -139,13 +144,16 @@ export default async function CaseDetailPage({
 
   const { data: pendingUploads } = await supabase
     .from("pending_uploads")
-    .select("id, zoho_file_name, zoho_uploaded_time")
+    .select(
+      "id, zoho_file_name, zoho_uploaded_time, ai_status, ai_suggested_document_id, ai_recommendation, ai_summary, ai_checks, ai_expiry_date, ai_error",
+    )
     .eq("application_id", id)
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
+  // Rejected items are open too: a resubmitted file gets matched to them.
   const missingDocuments = currentStageDocuments
-    .filter((doc) => doc.status === "missing")
+    .filter((doc) => doc.status === "missing" || doc.status === "rejected")
     .map((doc) => ({ id: doc.id, item_name: doc.item_name }));
 
   const { data: tasks } = await supabase
@@ -226,6 +234,7 @@ export default async function CaseDetailPage({
           uploads={pendingUploads ?? []}
           missingDocuments={missingDocuments}
           locked={locked}
+          verificationEnabled={isVerificationEnabled()}
         />
 
         <section data-tour="checklist">

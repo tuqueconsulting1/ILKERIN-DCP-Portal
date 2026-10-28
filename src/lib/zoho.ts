@@ -145,18 +145,26 @@ export type WorkdriveFile = {
 };
 
 /**
- * Lists the direct children of a WorkDrive folder, filtering out subfolders
- * - clients are expected to drop files directly into their folder, not
- * create their own subfolder structure.
+ * Lists the files in a WorkDrive folder, descending into subfolders up to
+ * `maxDepth` levels. Historical clients' folders are organized by form
+ * ("Form 2", "Form 3 - director documents", ...) and the app's own stage
+ * subfolders sit one level down, so a flat listing misses most documents.
+ * The depth cap keeps one deeply nested folder from fanning out into
+ * hundreds of API calls.
  */
-export async function listFolderFiles(folderId: string): Promise<WorkdriveFile[]> {
+export async function listFolderFiles(folderId: string, maxDepth = 3): Promise<WorkdriveFile[]> {
   const res = await zohoApi(`/workdrive/api/v1/files/${folderId}/files`, { method: "GET" });
+  const items = res.data as Array<Record<string, unknown>>;
+  const isFolder = (item: Record<string, unknown>) =>
+    (item.attributes as Record<string, unknown>).type === "folder";
 
-  return (res.data as Array<Record<string, unknown>>)
-    .filter((item) => {
-      const attrs = item.attributes as Record<string, unknown>;
-      return attrs.type !== "folder";
-    })
+  const nested =
+    maxDepth > 0
+      ? (await Promise.all(items.filter(isFolder).map((f) => listFolderFiles(f.id as string, maxDepth - 1)))).flat()
+      : [];
+
+  const files = items
+    .filter((item) => !isFolder(item))
     .map((item) => {
       const attrs = item.attributes as Record<string, unknown>;
       const uploadedMillis = attrs.uploaded_time_in_millisecond ?? attrs.created_time_in_millisecond;
@@ -168,6 +176,8 @@ export async function listFolderFiles(folderId: string): Promise<WorkdriveFile[]
         uploadedTime: uploadedMillis ? new Date(Number(uploadedMillis)).toISOString() : null,
       };
     });
+
+  return [...files, ...nested];
 }
 
 /**

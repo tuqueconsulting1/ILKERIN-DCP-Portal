@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# One-off imports of real client data - run in the Supabase SQL editor, never commit
+/supabase/data-imports/
