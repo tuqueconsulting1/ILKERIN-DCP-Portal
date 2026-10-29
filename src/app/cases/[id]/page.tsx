@@ -102,7 +102,7 @@ export default async function CaseDetailPage({
   const { data: documentsRaw } = await supabase
     .from("documents")
     .select(
-      "id, status, owner_tag, expiry_date, verified_at, verifier:profiles!documents_verified_by_fkey(full_name, email), checklist_template:checklist_templates(id, item_name, stage, sort_order, category, subcategory, doc_type, form)",
+      "id, status, owner_tag, expiry_date, verified_at, verifier:profiles!documents_verified_by_fkey(full_name, email), notes, notes_updated_at, note_author:profiles!documents_notes_updated_by_fkey(full_name, email), checklist_template:checklist_templates(id, item_name, stage, sort_order, category, subcategory, doc_type, form)",
     )
     .eq("application_id", id);
 
@@ -111,10 +111,14 @@ export default async function CaseDetailPage({
       ? doc.checklist_template[0]
       : doc.checklist_template;
     const verifier = Array.isArray(doc.verifier) ? doc.verifier[0] : doc.verifier;
+    const noteAuthor = Array.isArray(doc.note_author) ? doc.note_author[0] : doc.note_author;
 
     return {
       verifiedBy: verifier ? displayName(verifier.full_name, verifier.email) : null,
       verifiedAt: doc.verified_at ?? null,
+      notes: doc.notes ?? null,
+      notesUpdatedBy: noteAuthor ? displayName(noteAuthor.full_name, noteAuthor.email) : null,
+      notesUpdatedAt: doc.notes_updated_at ?? null,
       id: doc.id,
       status: doc.status,
       owner_tag: doc.owner_tag,
@@ -133,10 +137,13 @@ export default async function CaseDetailPage({
   const currentStageDocuments: ChecklistDocument[] = normalizedDocuments
     .filter((doc) => doc.stage === application.stage)
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId, category, subcategory, docType, form, verifiedBy, verifiedAt }) => ({
+    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId, category, subcategory, docType, form, verifiedBy, verifiedAt, notes, notesUpdatedBy, notesUpdatedAt }) => ({
       id,
       verifiedBy,
       verifiedAt,
+      notes,
+      notesUpdatedBy,
+      notesUpdatedAt,
       status,
       owner_tag,
       expiry_date,

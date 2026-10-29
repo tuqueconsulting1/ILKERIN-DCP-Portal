@@ -44,3 +44,31 @@ export async function updateDocumentStatus(
   revalidatePath("/ndtcp");
   return { success: true };
 }
+
+export async function updateDocumentNotes(documentId: string, applicationId: string, notes: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  const trimmed = notes.trim();
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      notes: trimmed || null,
+      notes_updated_by: trimmed ? user.id : null,
+      notes_updated_at: trimmed ? new Date().toISOString() : null,
+    })
+    .eq("id", documentId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/cases/${applicationId}`);
+  return { success: true };
+}

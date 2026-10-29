@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateDocumentStatus } from "@/app/actions/documents";
+import { updateDocumentNotes, updateDocumentStatus } from "@/app/actions/documents";
 import { reorderChecklistTemplates } from "@/app/actions/checklist-templates";
 
 export type ChecklistDocument = {
@@ -18,6 +18,9 @@ export type ChecklistDocument = {
   form: string | null;
   verifiedBy: string | null;
   verifiedAt: string | null;
+  notes: string | null;
+  notesUpdatedBy: string | null;
+  notesUpdatedAt: string | null;
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -73,6 +76,8 @@ export function DocumentChecklist({
   const [reorderError, setReorderError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [expandedVerifier, setExpandedVerifier] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
   const router = useRouter();
 
   // Re-sync from fresh server props (e.g. once the background refresh below
@@ -147,6 +152,91 @@ export function DocumentChecklist({
     });
   }
 
+  function saveNote(e: React.FormEvent<HTMLFormElement>, documentId: string) {
+    e.preventDefault();
+    const notes = String(new FormData(e.currentTarget).get("notes") ?? "");
+    setSavingNoteId(documentId);
+    setErrors((errs) => ({ ...errs, [documentId]: "" }));
+
+    updateDocumentNotes(documentId, applicationId, notes).then((result) => {
+      setSavingNoteId(null);
+      if (result?.error) {
+        setErrors((errs) => ({ ...errs, [documentId]: result.error! }));
+        return;
+      }
+      // Show the new note straight away; the refresh fills in the author.
+      setLocalDocs((docs) => docs.map((d) => (d.id === documentId ? { ...d, notes: notes.trim() || null } : d)));
+      setEditingNoteId(null);
+      router.refresh();
+    });
+  }
+
+  function renderNote(doc: ChecklistDocument) {
+    if (editingNoteId === doc.id) {
+      return (
+        <form onSubmit={(e) => saveNote(e, doc.id)} className="mt-1.5 space-y-1">
+          <textarea
+            name="notes"
+            defaultValue={doc.notes ?? ""}
+            placeholder="Add a note about this item for the team"
+            rows={2}
+            autoFocus
+            className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={savingNoteId === doc.id}
+              className="rounded-md bg-brand-dark px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-dark/90 disabled:opacity-50"
+            >
+              {savingNoteId === doc.id ? "Saving…" : "Save note"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingNoteId(null)}
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    if (doc.notes) {
+      return (
+        <div className="animate-fade-in mt-1.5 whitespace-pre-wrap rounded-md bg-amber-50 dark:bg-amber-900/20 px-2 py-1 text-xs text-amber-900 dark:text-amber-200">
+          {doc.notes}
+          <div className="mt-0.5 text-[11px] text-amber-700/80 dark:text-amber-300/70">
+            {doc.notesUpdatedBy && `${doc.notesUpdatedBy}`}
+            {doc.notesUpdatedAt && ` · ${new Date(doc.notesUpdatedAt).toLocaleDateString()}`}
+            {!locked && (
+              <button
+                type="button"
+                onClick={() => setEditingNoteId(doc.id)}
+                className="ml-2 underline underline-offset-2 hover:text-brand-dark dark:hover:text-brand"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (locked) return null;
+
+    return (
+      <button
+        type="button"
+        onClick={() => setEditingNoteId(doc.id)}
+        className="mt-1 block text-[11px] text-zinc-400 dark:text-zinc-500 transition-colors hover:text-brand-dark dark:hover:text-brand"
+      >
+        + Add note
+      </button>
+    );
+  }
+
   function renderRow(doc: ChecklistDocument) {
     return (
       <tr
@@ -194,6 +284,7 @@ export function DocumentChecklist({
               )}
             </div>
           )}
+          {renderNote(doc)}
         </td>
         <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 capitalize">{doc.owner_tag}</td>
         <td className="px-4 py-3">
