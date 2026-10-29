@@ -2,7 +2,15 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logCbkQuery, markCbkResponded } from "@/app/actions/cbk";
+import {
+  attachCbkFile,
+  deleteCbkFile,
+  logCbkQuery,
+  markCbkResponded,
+  saveCbkVerificationNote,
+  setCbkFileVerified,
+  type CbkAttachmentSlot,
+} from "@/app/actions/cbk";
 import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MB } from "@/lib/attachments";
 
 export type CbkEntry = {
@@ -16,6 +24,12 @@ export type CbkEntry = {
   query_zoho_file_name: string | null;
   response_zoho_file_id: string | null;
   response_zoho_file_name: string | null;
+  query_file_verified_by: string | null;
+  query_file_verified_at: string | null;
+  query_file_verification_note: string | null;
+  response_file_verified_by: string | null;
+  response_file_verified_at: string | null;
+  response_file_verification_note: string | null;
 };
 
 const fileInputClass =
@@ -32,8 +46,7 @@ function rejectOversizedFile(e: React.ChangeEvent<HTMLInputElement>, setError: (
   setError(null);
 }
 
-function Attachment({ fileId, name }: { fileId: string | null; name: string | null }) {
-  if (!fileId) return null;
+function AttachmentLink({ fileId, name }: { fileId: string; name: string | null }) {
   // Proxied through our own server (see api/attachments/[fileId]) rather than
   // linking Zoho's permalink directly -- that link only opens for someone
   // who is themselves a member of the Zoho org, which case managers aren't.
@@ -47,6 +60,181 @@ function Attachment({ fileId, name }: { fileId: string | null; name: string | nu
     >
       📎 {name ?? "Attachment"}
     </a>
+  );
+}
+
+/**
+ * One attachment slot (query or response) on a correspondence row: the file
+ * link, delete, a shared "Verified" checkbox and a verification note. All of
+ * it is stored on the row, so whatever one case manager sets here is what
+ * every other staff member sees on their next load.
+ */
+function AttachmentSlot({
+  entry,
+  slot,
+  applicationId,
+  locked,
+  allowAttach,
+}: {
+  entry: CbkEntry;
+  slot: CbkAttachmentSlot;
+  applicationId: string;
+  locked: boolean;
+  allowAttach: boolean;
+}) {
+  const fileId = entry[`${slot}_zoho_file_id`];
+  const fileName = entry[`${slot}_zoho_file_name`];
+  const verifiedBy = entry[`${slot}_file_verified_by`];
+  const verifiedAt = entry[`${slot}_file_verified_at`];
+  const note = entry[`${slot}_file_verification_note`];
+  const verified = Boolean(verifiedAt);
+
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [editingNote, setEditingNote] = useState(false);
+  const router = useRouter();
+
+  function run(action: () => Promise<{ error?: string } | undefined>, onSuccess?: () => void) {
+    setError(null);
+    startTransition(async () => {
+      const result = await action();
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      onSuccess?.();
+      router.refresh();
+    });
+  }
+
+  function handleDelete() {
+    if (!window.confirm(`Delete "${fileName ?? "this attachment"}"? It will be moved to the WorkDrive trash.`)) return;
+    run(() => deleteCbkFile(entry.id, applicationId, slot));
+  }
+
+  function handleAttach(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      rejectOversizedFile(e, setError);
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    e.target.value = "";
+    run(() => attachCbkFile(entry.id, applicationId, slot, formData));
+  }
+
+  function handleSaveNote(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const text = String(new FormData(e.currentTarget).get("note") ?? "");
+    run(() => saveCbkVerificationNote(entry.id, applicationId, slot, text), () => setEditingNote(false));
+  }
+
+  if (!fileId && !note && (locked || !allowAttach)) return null;
+
+  return (
+    <div className={`mt-1 space-y-1 ${pending ? "opacity-60" : ""}`}>
+      {fileId ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <AttachmentLink fileId={fileId} name={fileName} />
+          <label className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <input
+              type="checkbox"
+              checked={verified}
+              disabled={locked || pending}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                run(() => setCbkFileVerified(entry.id, applicationId, slot, checked));
+              }}
+              className="h-3.5 w-3.5 accent-green-600"
+            />
+            Verified
+          </label>
+          {verified && (
+            <span className="text-[11px] text-green-700 dark:text-green-400">
+              by {verifiedBy ?? "a team member"}
+              {verifiedAt && ` · ${new Date(verifiedAt).toLocaleDateString()}`}
+            </span>
+          )}
+          {!locked && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={pending}
+              className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors hover:text-red-600 dark:hover:text-red-400"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      ) : (
+        !locked &&
+        allowAttach && (
+          <div>
+            <input type="file" disabled={pending} className={fileInputClass} onChange={handleAttach} />
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+              {pending ? "Uploading…" : `Attach ${slot} file · max ${MAX_ATTACHMENT_MB}MB`}
+            </p>
+          </div>
+        )
+      )}
+
+      {editingNote ? (
+        <form onSubmit={handleSaveNote} className="space-y-1">
+          <textarea
+            name="note"
+            defaultValue={note ?? ""}
+            placeholder="Verification note -- anything the team should know about this file"
+            rows={2}
+            autoFocus
+            className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded-md bg-brand-dark px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-dark/90 disabled:opacity-50"
+            >
+              {pending ? "Saving…" : "Save note"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingNote(false)}
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : note ? (
+        <p className="whitespace-pre-wrap rounded-md bg-amber-50 dark:bg-amber-900/20 px-2 py-1 text-xs text-amber-900 dark:text-amber-200">
+          <span className="font-medium">Verification note:</span> {note}
+          {!locked && (
+            <button
+              type="button"
+              onClick={() => setEditingNote(true)}
+              className="ml-2 text-[11px] text-zinc-500 dark:text-zinc-400 underline underline-offset-2 hover:text-brand-dark dark:hover:text-brand"
+            >
+              Edit
+            </button>
+          )}
+        </p>
+      ) : (
+        fileId &&
+        !locked && (
+          <button
+            type="button"
+            onClick={() => setEditingNote(true)}
+            className="block text-[11px] text-zinc-500 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand"
+          >
+            + Add verification note
+          </button>
+        )
+      )}
+
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+    </div>
   );
 }
 
@@ -78,9 +266,15 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Received {entry.received_date} · due {entry.response_deadline ?? "-"} · {entry.response_status}
       </p>
-      <Attachment fileId={entry.query_zoho_file_id} name={entry.query_zoho_file_name} />
+      <AttachmentSlot entry={entry} slot="query" applicationId={applicationId} locked={locked} allowAttach />
       {entry.response_text && <p className="text-xs text-zinc-600 dark:text-zinc-400">Response: {entry.response_text}</p>}
-      <Attachment fileId={entry.response_zoho_file_id} name={entry.response_zoho_file_name} />
+      <AttachmentSlot
+        entry={entry}
+        slot="response"
+        applicationId={applicationId}
+        locked={locked}
+        allowAttach={entry.response_status === "responded"}
+      />
 
       {!locked && entry.response_status !== "responded" && !responding && (
         <button

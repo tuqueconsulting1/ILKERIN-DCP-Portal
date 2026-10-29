@@ -183,10 +183,20 @@ export default async function CaseDetailPage({
   const { data: cbkCorrespondence } = await supabase
     .from("cbk_correspondence")
     .select(
-      "id, query_text, received_date, response_deadline, response_status, response_text, query_zoho_file_id, query_zoho_file_name, response_zoho_file_id, response_zoho_file_name",
+      "id, query_text, received_date, response_deadline, response_status, response_text, query_zoho_file_id, query_zoho_file_name, response_zoho_file_id, response_zoho_file_name, query_file_verified_at, query_file_verification_note, query_verifier:profiles!cbk_correspondence_query_file_verified_by_fkey(full_name, email), response_file_verified_at, response_file_verification_note, response_verifier:profiles!cbk_correspondence_response_file_verified_by_fkey(full_name, email)",
     )
     .eq("application_id", id)
     .order("received_date", { ascending: false });
+
+  const cbkEntries = (cbkCorrespondence ?? []).map(({ query_verifier, response_verifier, ...entry }) => {
+    const queryVerifier = Array.isArray(query_verifier) ? query_verifier[0] : query_verifier;
+    const responseVerifier = Array.isArray(response_verifier) ? response_verifier[0] : response_verifier;
+    return {
+      ...entry,
+      query_file_verified_by: queryVerifier ? displayName(queryVerifier.full_name, queryVerifier.email) : null,
+      response_file_verified_by: responseVerifier ? displayName(responseVerifier.full_name, responseVerifier.email) : null,
+    };
+  });
 
   return (
     <div className="flex-1 bg-zinc-50 dark:bg-zinc-950 px-6 py-8">
@@ -295,7 +305,7 @@ export default async function CaseDetailPage({
 
         <section data-tour="cbk-log">
           <h2 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">CBK correspondence</h2>
-          <CbkLog applicationId={id} entries={cbkCorrespondence ?? []} locked={locked} />
+          <CbkLog applicationId={id} entries={cbkEntries} locked={locked} />
         </section>
 
         {client && (

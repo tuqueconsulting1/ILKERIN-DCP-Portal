@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     // Set with headroom above MAX_ATTACHMENT_BYTES (lib/attachments.ts) so
     // that constant's friendly error fires before this hard framework cutoff.
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "12mb",
     },
   },
 };

@@ -525,6 +525,17 @@ unblocked.
       WorkDrive `ZOHO_CLIENT_ID`/`SECRET` - and (2) that client added as a
       custom OIDC provider named exactly `custom:zoho` in the Supabase
       dashboard. Untestable end-to-end until both are done
+- [~] **CBK attachments: 10MB limit, delete, shared verification + notes**:
+      attachment cap raised 8MB → 10MB (`lib/attachments.ts`; server action
+      body limit raised to 12mb for multipart headroom). Each query/response
+      attachment can now be deleted (moved to the WorkDrive trash, and a
+      replacement attached into the empty slot), ticked "Verified" with who
+      and when shown to every staff member, and given a free-text
+      verification note (`0023_cbk_attachment_verification.sql`,
+      `actions/cbk.ts`, `components/cbk-log.tsx`). Deleting a file clears
+      its verification but keeps the note. Type-check/build pass; **not yet
+      verified live** - `0023` hadn't been applied to Supabase as of this
+      writing
 
 ## Phase 4 - Reminders, CBK tracker, fees, push notifications
 

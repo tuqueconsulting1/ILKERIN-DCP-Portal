@@ -240,6 +240,20 @@ export async function uploadFileToWorkdrive(
   };
 }
 
+/**
+ * Moves a file to the WorkDrive trash (status "51") rather than deleting it
+ * outright, so a mistaken delete from the app can still be restored by a
+ * Zoho admin.
+ */
+export async function trashWorkdriveFile(fileId: string): Promise<void> {
+  await zohoApi(`/workdrive/api/v1/files/${fileId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      data: { attributes: { status: "51" }, type: "files" },
+    }),
+  });
+}
+
 export type DownloadedWorkdriveFile = {
   buffer: Buffer;
   contentType: string;

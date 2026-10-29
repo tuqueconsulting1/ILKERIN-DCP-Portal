@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { extractFolderIdFromUrl, uploadFileToWorkdrive } from "@/lib/zoho";
+import { extractFolderIdFromUrl, trashWorkdriveFile, uploadFileToWorkdrive } from "@/lib/zoho";
 import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MB } from "@/lib/attachments";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -162,5 +162,153 @@ export async function markCbkResponded(
 
   revalidatePath(`/cases/${applicationId}`);
   revalidatePath("/ndtcp");
+  return { success: true };
+}
+
+export type CbkAttachmentSlot = "query" | "response";
+
+function assertSlot(slot: string): slot is CbkAttachmentSlot {
+  return slot === "query" || slot === "response";
+}
+
+async function requireUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+}
+
+/**
+ * Attaches a file to an empty query/response slot (e.g. after the wrong file
+ * was deleted). A new file hasn't been checked by anyone, so this clears any
+ * verification left over from a previous file in that slot.
+ */
+export async function attachCbkFile(
+  correspondenceId: string,
+  applicationId: string,
+  slot: CbkAttachmentSlot,
+  formData: FormData,
+) {
+  if (!assertSlot(slot)) return { error: "Unknown attachment slot." };
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) return { error: "Choose a file to attach." };
+
+  const supabase = await createClient();
+  if (!(await requireUser(supabase))) return { error: "You must be signed in." };
+
+  const uploadResult = await uploadAttachment(supabase, applicationId, file);
+  if ("error" in uploadResult) return { error: uploadResult.error };
+  const attachment = uploadResult.attachment!;
+
+  const { error } = await supabase
+    .from("cbk_correspondence")
+    .update({
+      [`${slot}_zoho_file_id`]: attachment.fileId,
+      [`${slot}_zoho_file_url`]: attachment.url,
+      [`${slot}_zoho_file_name`]: attachment.fileName,
+      [`${slot}_file_verified_by`]: null,
+      [`${slot}_file_verified_at`]: null,
+    })
+    .eq("id", correspondenceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cases/${applicationId}`);
+  return { success: true };
+}
+
+/**
+ * Removes an attachment from a correspondence row and moves the file to the
+ * WorkDrive trash. The row is cleared even if the trash call fails (e.g. the
+ * file was already removed in WorkDrive directly) -- otherwise a file that no
+ * longer exists could never be detached from the case.
+ */
+export async function deleteCbkFile(correspondenceId: string, applicationId: string, slot: CbkAttachmentSlot) {
+  if (!assertSlot(slot)) return { error: "Unknown attachment slot." };
+
+  const supabase = await createClient();
+  if (!(await requireUser(supabase))) return { error: "You must be signed in." };
+
+  const { data: row, error: readErr } = await supabase
+    .from("cbk_correspondence")
+    .select(`${slot}_zoho_file_id`)
+    .eq("id", correspondenceId)
+    .single();
+
+  if (readErr) return { error: readErr.message };
+
+  const fileId = (row as Record<string, string | null>)[`${slot}_zoho_file_id`];
+  if (fileId) {
+    try {
+      await trashWorkdriveFile(fileId);
+    } catch (err) {
+      console.error(`Couldn't trash WorkDrive file ${fileId}:`, err);
+    }
+  }
+
+  const { error } = await supabase
+    .from("cbk_correspondence")
+    .update({
+      [`${slot}_zoho_file_id`]: null,
+      [`${slot}_zoho_file_url`]: null,
+      [`${slot}_zoho_file_name`]: null,
+      [`${slot}_file_verified_by`]: null,
+      [`${slot}_file_verified_at`]: null,
+    })
+    .eq("id", correspondenceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cases/${applicationId}`);
+  return { success: true };
+}
+
+export async function setCbkFileVerified(
+  correspondenceId: string,
+  applicationId: string,
+  slot: CbkAttachmentSlot,
+  verified: boolean,
+) {
+  if (!assertSlot(slot)) return { error: "Unknown attachment slot." };
+
+  const supabase = await createClient();
+  const user = await requireUser(supabase);
+  if (!user) return { error: "You must be signed in." };
+
+  const { error } = await supabase
+    .from("cbk_correspondence")
+    .update({
+      [`${slot}_file_verified_by`]: verified ? user.id : null,
+      [`${slot}_file_verified_at`]: verified ? new Date().toISOString() : null,
+    })
+    .eq("id", correspondenceId)
+    // Can't verify a slot with nothing in it.
+    .not(`${slot}_zoho_file_id`, "is", null);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cases/${applicationId}`);
+  return { success: true };
+}
+
+export async function saveCbkVerificationNote(
+  correspondenceId: string,
+  applicationId: string,
+  slot: CbkAttachmentSlot,
+  note: string,
+) {
+  if (!assertSlot(slot)) return { error: "Unknown attachment slot." };
+
+  const supabase = await createClient();
+  if (!(await requireUser(supabase))) return { error: "You must be signed in." };
+
+  const { error } = await supabase
+    .from("cbk_correspondence")
+    .update({ [`${slot}_file_verification_note`]: note.trim() || null })
+    .eq("id", correspondenceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/cases/${applicationId}`);
   return { success: true };
 }
