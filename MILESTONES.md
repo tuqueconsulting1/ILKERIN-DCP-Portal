@@ -190,6 +190,28 @@ unblocked.
       - no expiry computation is implemented yet. `documents.expiry_date`
       and `checklist_templates.expiry_rule_days` already exist in the schema
       for whichever mechanism lands
+- [x] **Data change (2026-10-28): Oya Micro-Credit Company Limited
+      relinked** to a new WorkDrive folder
+      (`https://workdrive.zoho.com/folder/bzjlife392667719544a9a52b1685574e89a5`,
+      replacing `va6mw7c21d8e27f784ee9a6c7b192ac45c3e1`). Applied directly
+      in Supabase with the service-role key, updating **both**
+      `workdrive_folder_url` and `zoho_workdrive_folder_id` - polling and
+      CBK attachment uploads prefer `zoho_workdrive_folder_id` over the
+      URL, so changing the URL alone would have left them on the old
+      folder. Stage subfolder ids were already null for this client and
+      were left as-is (no stage subfolders created in the new folder)
+- [x] **Gap found while doing the above, fixed (2026-10-28)**:
+      `updateWorkdriveFolderUrl` (`src/app/actions/clients.ts`, used by the
+      case page's `workdrive-link-editor.tsx`) only wrote
+      `workdrive_folder_url`, so for any client with a
+      `zoho_workdrive_folder_id` (every auto-created folder) relinking
+      through the UI silently kept polling and uploads on the old folder.
+      It now also sets `zoho_workdrive_folder_id` from
+      `extractFolderIdFromUrl()` (null for an unparseable link such as an
+      external share link) whenever the resolved folder changes, resets the
+      stage subfolder ids, and best-effort creates fresh stage subfolders in
+      the new folder (same as Add Client). Re-saving the same folder changes
+      nothing, so it can't create duplicate subfolders
 
 ## Phase 3 - Case manager webapp core
 

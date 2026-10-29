@@ -35,6 +35,19 @@ const NEXT_STAGE: Record<string, string | undefined> = {
   stage_2: "stage_3",
 };
 
+// New profiles default full_name to the email's local part (see
+// handle_new_user), so "collins.kulei" is turned into "Collins Kulei".
+function displayName(fullName: string | null, email: string) {
+  const localPart = email.split("@")[0];
+  const raw = fullName && fullName !== localPart ? fullName : localPart;
+  if (raw.includes(" ")) return raw;
+  return raw
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 const CASE_TOUR: TourStep[] = [
   {
     selector: '[data-tour="workdrive-link"]',
@@ -89,7 +102,7 @@ export default async function CaseDetailPage({
   const { data: documentsRaw } = await supabase
     .from("documents")
     .select(
-      "id, status, owner_tag, expiry_date, checklist_template:checklist_templates(id, item_name, stage, sort_order, category, subcategory, doc_type, form)",
+      "id, status, owner_tag, expiry_date, verified_at, verifier:profiles!documents_verified_by_fkey(full_name, email), checklist_template:checklist_templates(id, item_name, stage, sort_order, category, subcategory, doc_type, form)",
     )
     .eq("application_id", id);
 
@@ -97,8 +110,11 @@ export default async function CaseDetailPage({
     const template = Array.isArray(doc.checklist_template)
       ? doc.checklist_template[0]
       : doc.checklist_template;
+    const verifier = Array.isArray(doc.verifier) ? doc.verifier[0] : doc.verifier;
 
     return {
+      verifiedBy: verifier ? displayName(verifier.full_name, verifier.email) : null,
+      verifiedAt: doc.verified_at ?? null,
       id: doc.id,
       status: doc.status,
       owner_tag: doc.owner_tag,
@@ -117,8 +133,10 @@ export default async function CaseDetailPage({
   const currentStageDocuments: ChecklistDocument[] = normalizedDocuments
     .filter((doc) => doc.stage === application.stage)
     .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId, category, subcategory, docType, form }) => ({
+    .map(({ id, status, owner_tag, expiry_date, item_name, checklistTemplateId, category, subcategory, docType, form, verifiedBy, verifiedAt }) => ({
       id,
+      verifiedBy,
+      verifiedAt,
       status,
       owner_tag,
       expiry_date,

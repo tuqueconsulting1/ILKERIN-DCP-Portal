@@ -157,13 +157,56 @@ export async function updateWorkdriveFolderUrl(
     return { error: "You must be signed in." };
   }
 
+  const { data: current, error: currentErr } = await supabase
+    .from("clients")
+    .select("zoho_workdrive_folder_id")
+    .eq("id", clientId)
+    .single();
+
+  if (currentErr) {
+    return { error: currentErr.message };
+  }
+
+  // Polling and CBK uploads prefer zoho_workdrive_folder_id over the URL, so
+  // it has to follow the link - otherwise relinking leaves them on the old
+  // folder. An unparseable link (e.g. an external share link) clears it, and
+  // the stage subfolder ids are reset since they belonged to the old folder.
+  const url = workdriveFolderUrl.trim() || null;
+  const newFolderId = extractFolderIdFromUrl(url);
+  const folderChanged = newFolderId !== current.zoho_workdrive_folder_id;
+
   const { error } = await supabase
     .from("clients")
-    .update({ workdrive_folder_url: workdriveFolderUrl.trim() || null })
+    .update({
+      workdrive_folder_url: url,
+      ...(folderChanged && {
+        zoho_workdrive_folder_id: newFolderId,
+        workdrive_stage1_folder_id: null,
+        workdrive_stage2_folder_id: null,
+        workdrive_stage3_folder_id: null,
+      }),
+    })
     .eq("id", clientId);
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Best-effort, same as addClient: the relink itself already succeeded.
+  if (folderChanged && newFolderId) {
+    try {
+      const stageFolders = await createStageSubfolders(newFolderId);
+      await supabase
+        .from("clients")
+        .update({
+          workdrive_stage1_folder_id: stageFolders.stage1 ?? null,
+          workdrive_stage2_folder_id: stageFolders.stage2 ?? null,
+          workdrive_stage3_folder_id: stageFolders.stage3 ?? null,
+        })
+        .eq("id", clientId);
+    } catch {
+      // Stage subfolders stay unset; polling still covers the root folder.
+    }
   }
 
   revalidatePath(`/cases/${applicationId}`);

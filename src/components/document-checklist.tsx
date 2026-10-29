@@ -16,6 +16,8 @@ export type ChecklistDocument = {
   subcategory: string | null;
   docType: string | null;
   form: string | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -70,6 +72,7 @@ export function DocumentChecklist({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [reorderError, setReorderError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [expandedVerifier, setExpandedVerifier] = useState<string | null>(null);
   const router = useRouter();
 
   // Re-sync from fresh server props (e.g. once the background refresh below
@@ -118,7 +121,15 @@ export function DocumentChecklist({
   function setStatus(documentId: string, status: string) {
     const previous = localDocs.find((d) => d.id === documentId)?.status;
 
-    setLocalDocs((docs) => docs.map((d) => (d.id === documentId ? { ...d, status } : d)));
+    // Verifier details are filled in by the background refresh below; clear
+    // them straight away when an item leaves "verified".
+    setLocalDocs((docs) =>
+      docs.map((d) =>
+        d.id === documentId
+          ? { ...d, status, ...(status !== "verified" && { verifiedBy: null, verifiedAt: null }) }
+          : d,
+      ),
+    );
     setErrors((e) => ({ ...e, [documentId]: "" }));
 
     updateDocumentStatus(documentId, applicationId, status).then((result) => {
@@ -194,14 +205,33 @@ export function DocumentChecklist({
         </td>
         <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "-"}</td>
         <td className="px-4 py-3">
-          <input
-            type="checkbox"
-            checked={doc.status === "verified"}
-            disabled={locked}
-            onChange={() => setStatus(doc.id, doc.status === "verified" ? "received" : "verified")}
-            className="h-4 w-4 accent-brand disabled:opacity-50"
-            aria-label={`Mark ${doc.item_name} as verified`}
-          />
+          <div className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={doc.status === "verified"}
+              disabled={locked}
+              onChange={() => setStatus(doc.id, doc.status === "verified" ? "received" : "verified")}
+              className="h-4 w-4 accent-brand disabled:opacity-50"
+              aria-label={`Mark ${doc.item_name} as verified`}
+            />
+            {doc.status === "verified" && doc.verifiedBy && (
+              <button
+                type="button"
+                onClick={() => setExpandedVerifier((cur) => (cur === doc.id ? null : doc.id))}
+                aria-expanded={expandedVerifier === doc.id}
+                aria-label="Show who verified this"
+                className={`px-0.5 text-xs leading-none text-zinc-400 transition-transform hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 ${expandedVerifier === doc.id ? "rotate-90" : ""}`}
+              >
+                ›
+              </button>
+            )}
+          </div>
+          {doc.status === "verified" && doc.verifiedBy && expandedVerifier === doc.id && (
+            <p className="animate-fade-in mt-1 whitespace-nowrap text-[11px] text-zinc-500 dark:text-zinc-400">
+              Verified by {doc.verifiedBy}
+              {doc.verifiedAt && ` · ${new Date(doc.verifiedAt).toLocaleDateString()}`}
+            </p>
+          )}
         </td>
         <td className="px-4 py-3">
           {locked ? (
