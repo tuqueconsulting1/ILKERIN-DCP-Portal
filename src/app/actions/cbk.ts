@@ -218,27 +218,26 @@ export async function attachCbkFile(
 }
 
 /**
- * Removes an attachment from a correspondence row and moves the file to the
- * WorkDrive trash. The row is cleared even if the trash call fails (e.g. the
- * file was already removed in WorkDrive directly) -- otherwise a file that no
- * longer exists could never be detached from the case.
+ * Deletes a whole correspondence entry: its attachments (moved to the
+ * WorkDrive trash), its linked "Respond to CBK query" task, and the row
+ * itself. A failed trash call doesn't block the delete (e.g. the file was
+ * already removed in WorkDrive directly) -- otherwise an entry pointing at a
+ * file that no longer exists could never be deleted.
  */
-export async function deleteCbkFile(correspondenceId: string, applicationId: string, slot: CbkAttachmentSlot) {
-  if (!assertSlot(slot)) return { error: "Unknown attachment slot." };
-
+export async function deleteCbkCorrespondence(correspondenceId: string, applicationId: string) {
   const supabase = await createClient();
   if (!(await requireUser(supabase))) return { error: "You must be signed in." };
 
   const { data: row, error: readErr } = await supabase
     .from("cbk_correspondence")
-    .select(`${slot}_zoho_file_id`)
+    .select("query_zoho_file_id, response_zoho_file_id")
     .eq("id", correspondenceId)
     .single();
 
   if (readErr) return { error: readErr.message };
 
-  const fileId = (row as Record<string, string | null>)[`${slot}_zoho_file_id`];
-  if (fileId) {
+  for (const fileId of [row.query_zoho_file_id, row.response_zoho_file_id]) {
+    if (!fileId) continue;
     try {
       await trashWorkdriveFile(fileId);
     } catch (err) {
@@ -246,20 +245,22 @@ export async function deleteCbkFile(correspondenceId: string, applicationId: str
     }
   }
 
-  const { error } = await supabase
-    .from("cbk_correspondence")
-    .update({
-      [`${slot}_zoho_file_id`]: null,
-      [`${slot}_zoho_file_url`]: null,
-      [`${slot}_zoho_file_name`]: null,
-      [`${slot}_file_verified_by`]: null,
-      [`${slot}_file_verified_at`]: null,
-    })
-    .eq("id", correspondenceId);
+  // tasks.linked_entity_id is a loose reference, not a foreign key, so the
+  // linked task has to be removed explicitly.
+  const { error: taskErr } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("linked_entity_type", "cbk_correspondence")
+    .eq("linked_entity_id", correspondenceId);
+
+  if (taskErr) return { error: taskErr.message };
+
+  const { error } = await supabase.from("cbk_correspondence").delete().eq("id", correspondenceId);
 
   if (error) return { error: error.message };
 
   revalidatePath(`/cases/${applicationId}`);
+  revalidatePath("/ndtcp");
   return { success: true };
 }
 

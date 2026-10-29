@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateDocumentNotes, updateDocumentStatus } from "@/app/actions/documents";
 import { reorderChecklistTemplates } from "@/app/actions/checklist-templates";
@@ -65,12 +65,14 @@ export function DocumentChecklist({
   documents: ChecklistDocument[];
   locked?: boolean;
 }) {
-  // Optimistic local copy: the checkbox/buttons update this instantly, while
-  // the server write and the resulting stage/completion recalculation happen
-  // in the background - no waiting on a full page refresh to see the click
-  // register. Re-synced whenever the server sends fresh props (e.g. after
-  // the background refresh below lands, or on a real page navigation).
+  // Local copy for drag-reordering and notes, re-synced whenever the server
+  // sends fresh props (e.g. after a refresh lands, or on a real navigation).
   const [localDocs, setLocalDocs] = useState(documents);
+  // Status changes (Verified tick, Mark received, Reject) are staged here
+  // and only written when the user clicks Save - kept separate from
+  // localDocs so a background refresh can't wipe out unsaved changes.
+  const [pendingStatus, setPendingStatus] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const [prevDocuments, setPrevDocuments] = useState(documents);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [reorderError, setReorderError] = useState<string | null>(null);
@@ -123,33 +125,55 @@ export function DocumentChecklist({
     });
   }
 
+  const pendingCount = Object.keys(pendingStatus).length;
+
+  // Warn before leaving the page with unsaved checklist changes.
+  useEffect(() => {
+    if (pendingCount === 0) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [pendingCount]);
+
+  function statusOf(doc: ChecklistDocument) {
+    return pendingStatus[doc.id] ?? doc.status;
+  }
+
   function setStatus(documentId: string, status: string) {
-    const previous = localDocs.find((d) => d.id === documentId)?.status;
-
-    // Verifier details are filled in by the background refresh below; clear
-    // them straight away when an item leaves "verified".
-    setLocalDocs((docs) =>
-      docs.map((d) =>
-        d.id === documentId
-          ? { ...d, status, ...(status !== "verified" && { verifiedBy: null, verifiedAt: null }) }
-          : d,
-      ),
-    );
+    const saved = documents.find((d) => d.id === documentId)?.status;
     setErrors((e) => ({ ...e, [documentId]: "" }));
-
-    updateDocumentStatus(documentId, applicationId, status).then((result) => {
-      if (result?.error) {
-        setLocalDocs((docs) =>
-          docs.map((d) => (d.id === documentId ? { ...d, status: previous ?? d.status } : d)),
-        );
-        setErrors((e) => ({ ...e, [documentId]: result.error! }));
-        return;
-      }
-      // Non-blocking: refreshes the page's server-derived numbers (stage
-      // label, overall completion %) once the write lands, without making
-      // the checkbox itself wait on it.
-      router.refresh();
+    setPendingStatus((pending) => {
+      const next = { ...pending };
+      // Toggling back to what's already saved isn't a change.
+      if (status === saved) delete next[documentId];
+      else next[documentId] = status;
+      return next;
     });
+  }
+
+  async function saveChanges() {
+    setSaving(true);
+    const failed: Record<string, string> = {};
+    const errs: Record<string, string> = {};
+
+    // One at a time, so the stage auto-advance trigger sees each change in
+    // order rather than racing parallel writes.
+    for (const [documentId, status] of Object.entries(pendingStatus)) {
+      const result = await updateDocumentStatus(documentId, applicationId, status);
+      if (result?.error) {
+        failed[documentId] = status;
+        errs[documentId] = result.error;
+      }
+    }
+
+    setPendingStatus(failed);
+    setErrors((e) => ({ ...e, ...errs }));
+    setSaving(false);
+    router.refresh();
+  }
+
+  function discardChanges() {
+    setPendingStatus({});
   }
 
   function saveNote(e: React.FormEvent<HTMLFormElement>, documentId: string) {
@@ -238,6 +262,8 @@ export function DocumentChecklist({
   }
 
   function renderRow(doc: ChecklistDocument) {
+    const status = statusOf(doc);
+    const unsaved = doc.id in pendingStatus;
     return (
       <tr
         key={doc.id}
@@ -289,23 +315,28 @@ export function DocumentChecklist({
         <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400 capitalize">{doc.owner_tag}</td>
         <td className="px-4 py-3">
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize transition-colors ${STATUS_STYLE[doc.status] ?? "bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"}`}
+            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize transition-colors ${STATUS_STYLE[status] ?? "bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400"}`}
           >
-            {doc.status}
+            {status}
           </span>
+          {unsaved && (
+            <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              Unsaved
+            </span>
+          )}
         </td>
         <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{doc.expiry_date ?? "-"}</td>
         <td className="px-4 py-3">
           <div className="flex items-center gap-1">
             <input
               type="checkbox"
-              checked={doc.status === "verified"}
+              checked={status === "verified"}
               disabled={locked}
-              onChange={() => setStatus(doc.id, doc.status === "verified" ? "received" : "verified")}
+              onChange={() => setStatus(doc.id, status === "verified" ? "received" : "verified")}
               className="h-4 w-4 accent-brand disabled:opacity-50"
               aria-label={`Mark ${doc.item_name} as verified`}
             />
-            {doc.status === "verified" && doc.verifiedBy && (
+            {status === "verified" && doc.verifiedBy && (
               <button
                 type="button"
                 onClick={() => setExpandedVerifier((cur) => (cur === doc.id ? null : doc.id))}
@@ -317,7 +348,7 @@ export function DocumentChecklist({
               </button>
             )}
           </div>
-          {doc.status === "verified" && doc.verifiedBy && expandedVerifier === doc.id && (
+          {status === "verified" && doc.verifiedBy && expandedVerifier === doc.id && (
             <p className="animate-fade-in mt-1 whitespace-nowrap text-[11px] text-zinc-500 dark:text-zinc-400">
               Verified by {doc.verifiedBy}
               {doc.verifiedAt && ` · ${new Date(doc.verifiedAt).toLocaleDateString()}`}
@@ -330,7 +361,7 @@ export function DocumentChecklist({
           ) : (
             <div className="flex flex-col gap-1">
               <div className="flex gap-2">
-                {doc.status !== "received" && doc.status !== "verified" && (
+                {status !== "received" && status !== "verified" && (
                   <button
                     onClick={() => setStatus(doc.id, "received")}
                     className="text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors hover:text-brand-dark dark:hover:text-brand"
@@ -338,7 +369,7 @@ export function DocumentChecklist({
                     Mark received
                   </button>
                 )}
-                {doc.status !== "rejected" && (
+                {status !== "rejected" && (
                   <button
                     onClick={() => setStatus(doc.id, "rejected")}
                     className="text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:text-red-800 dark:hover:text-red-400"
@@ -389,6 +420,31 @@ export function DocumentChecklist({
 
   return (
     <div className="space-y-3">
+      {!locked && pendingCount > 0 && (
+        <div className="animate-fade-in sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/30 px-4 py-2 text-sm shadow-sm">
+          <span className="text-amber-900 dark:text-amber-200">
+            {pendingCount} unsaved {pendingCount === 1 ? "change" : "changes"}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={discardChanges}
+              disabled={saving}
+              className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-50"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={saveChanges}
+              disabled={saving}
+              className="rounded-md bg-brand-dark px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-brand-dark/90 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      )}
       {reorderError && (
         <p className="animate-fade-in rounded-md border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 px-4 py-2 text-xs text-red-600 dark:text-red-400">
           Couldn&apos;t save the new order: {reorderError}

@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   attachCbkFile,
-  deleteCbkFile,
+  deleteCbkCorrespondence,
   logCbkQuery,
   markCbkResponded,
   saveCbkVerificationNote,
@@ -65,7 +65,7 @@ function AttachmentLink({ fileId, name }: { fileId: string; name: string | null 
 
 /**
  * One attachment slot (query or response) on a correspondence row: the file
- * link, delete, a shared "Verified" checkbox and a verification note. All of
+ * link, a shared "Verified" checkbox and a verification note. All of
  * it is stored on the row, so whatever one case manager sets here is what
  * every other staff member sees on their next load.
  */
@@ -105,11 +105,6 @@ function AttachmentSlot({
       onSuccess?.();
       router.refresh();
     });
-  }
-
-  function handleDelete() {
-    if (!window.confirm(`Delete "${fileName ?? "this attachment"}"? It will be moved to the WorkDrive trash.`)) return;
-    run(() => deleteCbkFile(entry.id, applicationId, slot));
   }
 
   function handleAttach(e: React.ChangeEvent<HTMLInputElement>) {
@@ -156,16 +151,6 @@ function AttachmentSlot({
               by {verifiedBy ?? "a team member"}
               {verifiedAt && ` · ${new Date(verifiedAt).toLocaleDateString()}`}
             </span>
-          )}
-          {!locked && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={pending}
-              className="text-xs text-zinc-500 dark:text-zinc-400 transition-colors hover:text-red-600 dark:hover:text-red-400"
-            >
-              Delete
-            </button>
           )}
         </div>
       ) : (
@@ -244,6 +229,24 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  function handleDelete() {
+    if (
+      !window.confirm(
+        "Delete this CBK correspondence entry? Its details, attached files (moved to the WorkDrive trash) and linked task will all be removed.",
+      )
+    )
+      return;
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteCbkCorrespondence(entry.id, applicationId);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   function handleRespond(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -261,8 +264,20 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
   }
 
   return (
-    <li className="animate-fade-in text-zinc-700 dark:text-zinc-300">
-      <p>{entry.query_text}</p>
+    <li className={`animate-fade-in text-zinc-700 dark:text-zinc-300 ${pending && !responding ? "opacity-60" : ""}`}>
+      <div className="flex items-start justify-between gap-2">
+        <p>{entry.query_text}</p>
+        {!locked && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={pending}
+            className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500 transition-colors hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+          >
+            {pending && !responding ? "Deleting…" : "Delete entry"}
+          </button>
+        )}
+      </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         Received {entry.received_date} · due {entry.response_deadline ?? "-"} · {entry.response_status}
       </p>
@@ -320,6 +335,7 @@ function CbkRow({ entry, applicationId, locked }: { entry: CbkEntry; application
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
         </form>
       )}
+      {!responding && error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </li>
   );
 }

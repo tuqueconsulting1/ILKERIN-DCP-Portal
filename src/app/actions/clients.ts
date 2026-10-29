@@ -267,3 +267,37 @@ export async function deleteClient(clientId: string) {
   revalidatePath("/ndtcp");
   return { success: true };
 }
+
+/**
+ * Lets a staff member take a case themselves (or drop one they hold) instead
+ * of waiting for an admin to assign it. Any staff member can already write
+ * clients under RLS, so this is a plain update.
+ */
+export async function setSelfAsCaseManager(clientId: string, applicationId: string, assign: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  let query = supabase
+    .from("clients")
+    .update({ case_manager_id: assign ? user.id : null })
+    .eq("id", clientId);
+  // Only unassign if it's actually still you - don't clear a colleague who
+  // took the case over in the meantime.
+  if (!assign) query = query.eq("case_manager_id", user.id);
+
+  const { error } = await query;
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/cases/${applicationId}`);
+  revalidatePath("/ndtcp");
+  return { success: true };
+}

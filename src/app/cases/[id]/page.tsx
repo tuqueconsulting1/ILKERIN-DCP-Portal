@@ -12,6 +12,7 @@ import { ClientNameEditor } from "@/components/client-name-editor";
 import { DeleteClientDialog } from "@/components/delete-client-dialog";
 import { TaskList } from "@/components/task-list";
 import { CbkLog } from "@/components/cbk-log";
+import { CaseManagerAssign } from "@/components/case-manager-assign";
 import { GuideMeButton, type TourStep } from "@/components/guided-tour";
 import { isVerificationEnabled } from "@/lib/verification";
 
@@ -87,7 +88,7 @@ export default async function CaseDetailPage({
   const { data: application, error: appError } = await supabase
     .from("applications")
     .select(
-      "id, stage, status, completion_pct, client:clients(id, company_name, workdrive_folder_url, workdrive_share_link)",
+      "id, stage, status, completion_pct, client:clients(id, company_name, workdrive_folder_url, workdrive_share_link, case_manager_id, case_manager:profiles!clients_case_manager_id_fkey(full_name, email))",
     )
     .eq("id", id)
     .single();
@@ -98,6 +99,10 @@ export default async function CaseDetailPage({
 
   const client = Array.isArray(application.client) ? application.client[0] : application.client;
   const locked = application.status === "complete";
+  const caseManager = Array.isArray(client?.case_manager) ? client.case_manager[0] : client?.case_manager;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: documentsRaw } = await supabase
     .from("documents")
@@ -250,6 +255,17 @@ export default async function CaseDetailPage({
               {!locked && application.stage === "stage_3" && <CompleteCaseButton applicationId={id} />}
             </div>
           </div>
+          {client && (
+            <div className="mt-1">
+              <CaseManagerAssign
+                clientId={client.id}
+                applicationId={id}
+                managerName={caseManager ? displayName(caseManager.full_name, caseManager.email) : null}
+                isMe={Boolean(user && client.case_manager_id === user.id)}
+                locked={locked}
+              />
+            </div>
+          )}
           {client && (
             <div data-tour="workdrive-link" className="mt-3 space-y-1">
               <WorkdriveLinkEditor
