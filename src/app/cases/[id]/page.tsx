@@ -13,6 +13,7 @@ import { DeleteClientDialog } from "@/components/delete-client-dialog";
 import { TaskList } from "@/components/task-list";
 import { CbkLog } from "@/components/cbk-log";
 import { CaseManagerAssign } from "@/components/case-manager-assign";
+import { listAssignableCaseManagers } from "@/app/actions/clients";
 import { GuideMeButton, type TourStep } from "@/components/guided-tour";
 import { isVerificationEnabled } from "@/lib/verification";
 
@@ -103,6 +104,7 @@ export default async function CaseDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const assignableManagers = locked ? [] : await listAssignableCaseManagers();
 
   const { data: documentsRaw } = await supabase
     .from("documents")
@@ -260,8 +262,10 @@ export default async function CaseDetailPage({
               <CaseManagerAssign
                 clientId={client.id}
                 applicationId={id}
+                managerId={client.case_manager_id ?? null}
                 managerName={caseManager ? displayName(caseManager.full_name, caseManager.email) : null}
-                isMe={Boolean(user && client.case_manager_id === user.id)}
+                currentUserId={user?.id ?? null}
+                options={assignableManagers}
                 locked={locked}
               />
             </div>

@@ -268,12 +268,26 @@ export async function deleteClient(clientId: string) {
   return { success: true };
 }
 
+export type AssignableCaseManager = { email: string; profileId: string | null; fullName: string | null };
+
+/** The allowlisted emails a case can be assigned to (see 0026). */
+export async function listAssignableCaseManagers(): Promise<AssignableCaseManager[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("assignable_case_managers");
+  return ((data ?? []) as { email: string; profile_id: string | null; full_name: string | null }[]).map((row) => ({
+    email: row.email,
+    profileId: row.profile_id,
+    fullName: row.full_name,
+  }));
+}
+
 /**
- * Lets a staff member take a case themselves (or drop one they hold) instead
- * of waiting for an admin to assign it. Any staff member can already write
- * clients under RLS, so this is a plain update.
+ * Sets (or clears, with null) a case's manager. Anyone on staff can assign
+ * a case to themselves; assigning someone else is limited to people on the
+ * sign-in allowlist who have signed in at least once, since
+ * case_manager_id has to point at an existing profile.
  */
-export async function setSelfAsCaseManager(clientId: string, applicationId: string, assign: boolean) {
+export async function assignCaseManager(clientId: string, applicationId: string, profileId: string | null) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -283,15 +297,14 @@ export async function setSelfAsCaseManager(clientId: string, applicationId: stri
     return { error: "You must be signed in." };
   }
 
-  let query = supabase
-    .from("clients")
-    .update({ case_manager_id: assign ? user.id : null })
-    .eq("id", clientId);
-  // Only unassign if it's actually still you - don't clear a colleague who
-  // took the case over in the meantime.
-  if (!assign) query = query.eq("case_manager_id", user.id);
+  if (profileId && profileId !== user.id) {
+    const allowed = await listAssignableCaseManagers();
+    if (!allowed.some((m) => m.profileId === profileId)) {
+      return { error: "That person isn't on the allowed list, or hasn't signed in yet." };
+    }
+  }
 
-  const { error } = await query;
+  const { error } = await supabase.from("clients").update({ case_manager_id: profileId }).eq("id", clientId);
 
   if (error) {
     return { error: error.message };
